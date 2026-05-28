@@ -1,20 +1,31 @@
-import { useState, useRef } from 'react';
-import { Link } from 'react-router-dom';
+import { useState, useRef, useEffect } from 'react';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 import { verifyCaptcha } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const LoginPage = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login, isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     email: '',
     password: '',
   });
   const [captchaToken, setCaptchaToken] = useState(null);
   const [isVerified, setIsVerified] = useState(false);
+  const [registrationToken, setRegistrationToken] = useState(null);
   const [status, setStatus] = useState({ type: '', message: '' });
   const [isLoading, setIsLoading] = useState(false);
   const turnstileRef = useRef();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/test', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -26,16 +37,18 @@ const LoginPage = () => {
     try {
       const result = await verifyCaptcha(token);
       setIsVerified(true);
-      setStatus({ 
-        type: 'success', 
-        message: 'Captcha Verified! You can now proceed to login.' 
+      setRegistrationToken(result.registrationToken);
+      setStatus({
+        type: 'success',
+        message: 'Captcha Verified! You can now proceed to login.'
       });
       console.log('Login Captcha Verification Result:', result);
     } catch (error) {
       setIsVerified(false);
-      setStatus({ 
-        type: 'error', 
-        message: error.message || 'Captcha verification failed. Please try again.' 
+      setRegistrationToken(null);
+      setStatus({
+        type: 'error',
+        message: error.message || 'Captcha verification failed. Please try again.'
       });
       if (turnstileRef.current) {
         turnstileRef.current.reset();
@@ -52,31 +65,40 @@ const LoginPage = () => {
       return;
     }
 
-    if (isVerified) {
-      setStatus({ 
-        type: 'success', 
-        message: 'Logged in successfully! (Captcha already verified on backend)' 
-      });
-      return;
-    }
-
     setIsLoading(true);
     setStatus({ type: '', message: '' });
 
     try {
-      // Reusing the same captcha verify endpoint as specified in requirements
-      const result = await verifyCaptcha(captchaToken);
-      setIsVerified(true);
-      setStatus({ 
-        type: 'success', 
-        message: 'Captcha Verified! You can now proceed to login.' 
+      let currentToken = registrationToken;
+
+      if (!isVerified || !currentToken) {
+        const result = await verifyCaptcha(captchaToken);
+        setIsVerified(true);
+        setRegistrationToken(result.registrationToken);
+        currentToken = result.registrationToken;
+      }
+
+      const result = await login(formData.email, formData.password, currentToken);
+
+      setStatus({
+        type: 'success',
+        message: result.message || 'Logged in successfully! Redirecting...'
       });
-      console.log('Login Captcha Verification Result:', result);
+
+      const origin = location.state?.from?.pathname || '/test';
+      
+      setTimeout(() => {
+        navigate(origin, { replace: true });
+      }, 1500);
+
     } catch (error) {
-      setStatus({ 
-        type: 'error', 
-        message: error.message || 'Captcha verification failed. Please try again.' 
+      setStatus({
+        type: 'error',
+        message: error.message || 'Login failed. Please try again.'
       });
+      setIsVerified(false);
+      setRegistrationToken(null);
+      setCaptchaToken(null);
       if (turnstileRef.current) {
         turnstileRef.current.reset();
       }
@@ -87,7 +109,7 @@ const LoginPage = () => {
 
   return (
     <div className="auth-container">
-      <motion.div 
+      <motion.div
         className="auth-card"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
@@ -100,7 +122,7 @@ const LoginPage = () => {
 
         <AnimatePresence mode="wait">
           {status.message && (
-            <motion.div 
+            <motion.div
               className={status.type === 'error' ? 'error-message' : 'success-message'}
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: 'auto' }}
@@ -141,6 +163,11 @@ const LoginPage = () => {
                 required
               />
             </div>
+            <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
+              <Link to="/forgot-password" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', textDecoration: 'none', transition: 'color 0.2s' }} onMouseEnter={(e) => e.target.style.color = '#fff'} onMouseLeave={(e) => e.target.style.color = 'var(--text-muted)'}>
+                Forgot Password?
+              </Link>
+            </div>
           </div>
 
           <div className="captcha-container">
@@ -161,15 +188,15 @@ const LoginPage = () => {
                 setIsVerified(false);
                 setStatus({ type: 'error', message: 'Turnstile verification failed. Please try again.' });
               }}
-              options={{ 
+              options={{
                 theme: 'dark',
                 appearance: 'always'
               }}
             />
           </div>
 
-          <button 
-            type="submit" 
+          <button
+            type="submit"
             className="submit-btn"
             disabled={isLoading || !captchaToken}
           >

@@ -4,9 +4,11 @@ import { Turnstile } from '@marsidev/react-turnstile';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, CheckCircle2, Loader2, ArrowLeft, ShieldCheck } from 'lucide-react';
 import { verifyCaptcha, registerUser, verifyOtp, resendOtp } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 const RegisterPage = () => {
   const navigate = useNavigate();
+  const { isAuthenticated } = useAuth();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -19,6 +21,12 @@ const RegisterPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [resendLoading, setResendLoading] = useState(false);
   const turnstileRef = useRef();
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/test', { replace: true });
+    }
+  }, [isAuthenticated, navigate]);
 
   // OTP Step States
   const [step, setStep] = useState('register'); // 'register' or 'otp'
