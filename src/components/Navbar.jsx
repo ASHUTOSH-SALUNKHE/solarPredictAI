@@ -65,7 +65,7 @@ const Navbar = () => {
         <div className="nav-actions">
           {isAuthenticated ? (
             <>
-              <Link to="/test" className="btn-signin">
+              <Link to="/dashboard" className="btn-signin">
                 Dashboard
               </Link>
               <button 
@@ -130,7 +130,7 @@ const Navbar = () => {
         <div className="mobile-nav-actions">
           {isAuthenticated ? (
             <>
-              <Link to="/test" className="mobile-btn-signin" onClick={() => setIsMobileMenuOpen(false)}>
+              <Link to="/dashboard" className="mobile-btn-signin" onClick={() => setIsMobileMenuOpen(false)}>
                 Dashboard
               </Link>
               <button 

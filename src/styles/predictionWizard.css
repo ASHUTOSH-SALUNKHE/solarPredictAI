@@ -1,0 +1,514 @@
+/* Prediction Wizard CSS */
+
+.wizard-container {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 24px;
+  background: rgba(18, 18, 24, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+}
+
+/* Stepper Navigation */
+.stepper-nav {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: relative;
+  margin-bottom: 40px;
+  padding: 0 40px;
+}
+
+.stepper-line {
+  position: absolute;
+  top: 24px;
+  left: 80px;
+  right: 80px;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.1);
+  z-index: 1;
+}
+
+.stepper-line-progress {
+  height: 100%;
+  background: linear-gradient(90deg, #10b981 0%, var(--db-accent) 100%);
+  transition: width 0.4s ease;
+}
+
+.step-node {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  cursor: pointer;
+  background: none;
+  border: none;
+  padding: 0;
+  width: 80px;
+}
+
+.step-node:focus {
+  outline: none;
+}
+
+.step-circle {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: #1f1f29;
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: var(--db-text-muted);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+/* Glowing effect for current step */
+.step-node.active .step-circle {
+  border-color: var(--db-accent);
+  background: rgba(245, 158, 11, 0.1);
+  color: var(--db-accent);
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.35);
+}
+
+.step-node.completed .step-circle {
+  border-color: #10b981;
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.2);
+}
+
+.step-node.locked {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.step-circle-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step-badge-check {
+  position: absolute;
+  bottom: -4px;
+  right: -4px;
+  background: #10b981;
+  border-radius: 50%;
+  padding: 2px;
+  color: #fff;
+  border: 2px solid #1f1f29;
+}
+
+.step-label {
+  margin-top: 12px;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--db-text-muted);
+  text-align: center;
+  white-space: nowrap;
+  transition: color 0.3s ease;
+}
+
+.step-node.active .step-label {
+  color: #fff;
+  font-weight: 600;
+}
+
+.step-node.completed .step-label {
+  color: rgba(255, 255, 255, 0.6);
+  text-decoration: line-through;
+}
+
+/* Card layout */
+.step-card {
+  background: rgba(30, 30, 40, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.3s ease;
+}
+
+.step-card.active {
+  border-color: rgba(245, 158, 11, 0.15);
+  background: rgba(30, 30, 40, 0.6);
+}
+
+.step-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  padding-bottom: 16px;
+}
+
+.step-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.step-card-icon {
+  font-size: 1.5rem;
+}
+
+.step-card-title {
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: #fff;
+  margin: 0;
+}
+
+.step-card-desc {
+  font-size: 0.85rem;
+  color: var(--db-text-muted);
+  margin-top: 4px;
+}
+
+.status-badge {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 20px;
+  letter-spacing: 0.02em;
+}
+
+.status-badge.not-started {
+  background: rgba(255, 255, 255, 0.05);
+  color: var(--db-text-muted);
+}
+
+.status-badge.in-progress {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3b82f6;
+  border: 1px solid rgba(59, 130, 246, 0.2);
+}
+
+.status-badge.completed {
+  background: rgba(16, 185, 129, 0.1);
+  color: #10b981;
+  border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+/* Form Styles for Step 1 */
+.step-form-wrapper {
+  margin-top: 16px;
+}
+
+.step-form-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.input-field-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.input-field-group label {
+  font-size: 0.8rem;
+  color: var(--db-text-secondary);
+  font-weight: 500;
+}
+
+.input-box {
+  background: rgba(10, 10, 15, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #fff;
+  font-size: 0.9rem;
+  transition: all 0.2s ease;
+}
+
+.input-box:focus {
+  outline: none;
+  border-color: var(--db-accent);
+  box-shadow: 0 0 8px rgba(245, 158, 11, 0.15);
+}
+
+.helper-link-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 20px;
+}
+
+.maps-link {
+  color: var(--db-accent);
+  font-size: 0.8rem;
+  text-decoration: underline;
+  cursor: pointer;
+  font-weight: 500;
+  width: fit-content;
+}
+
+.maps-helper-text {
+  color: var(--db-text-muted);
+  font-size: 0.7rem;
+  line-height: 1.4;
+}
+
+.step-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.action-btn-primary {
+  background: var(--db-accent);
+  color: #000;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.action-btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.action-btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn-secondary {
+  background: transparent;
+  color: #fff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn-secondary:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Geocoding Loading / Success states */
+.geocoding-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 24px;
+  text-align: center;
+  gap: 12px;
+}
+
+.geocoding-spinner {
+  width: 32px;
+  height: 32px;
+  border: 3px solid rgba(255, 255, 255, 0.1);
+  border-top-color: var(--db-accent);
+  border-radius: 50%;
+  animation: spinner-spin 1s linear infinite;
+}
+
+@keyframes spinner-spin {
+  to { transform: rotate(360deg); }
+}
+
+.address-confirm-box {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 8px;
+  padding: 16px;
+  font-size: 0.9rem;
+  color: #fff;
+  line-height: 1.5;
+  margin-bottom: 12px;
+}
+
+/* Chat container adaptation */
+.inline-chat-wrapper {
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(10, 10, 15, 0.35);
+  margin-top: 16px;
+}
+
+/* Step 2 Weather Summary Card */
+.weather-summary-card {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 12px;
+  padding: 20px;
+  margin-top: 20px;
+}
+
+.weather-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  font-weight: 600;
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.weather-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 16px;
+}
+
+.weather-kpi-item {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 8px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.weather-kpi-label {
+  font-size: 0.75rem;
+  color: var(--db-text-muted);
+}
+
+.weather-kpi-val {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* Step 3 AI Prediction Loader */
+.prediction-loader-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  text-align: center;
+  gap: 20px;
+}
+
+.pulse-solar-orb {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #f59e0b 0%, #d97706 70%, transparent 100%);
+  box-shadow: 0 0 24px rgba(245, 158, 11, 0.6);
+  position: relative;
+  animation: orb-pulse 2s infinite ease-in-out;
+}
+
+.pulse-solar-orb::before {
+  content: '';
+  position: absolute;
+  top: -12px;
+  left: -12px;
+  right: -12px;
+  bottom: -12px;
+  border: 2px dashed rgba(245, 158, 11, 0.4);
+  border-radius: 50%;
+  animation: ring-rotate 6s infinite linear;
+}
+
+@keyframes orb-pulse {
+  0% { transform: scale(0.95); box-shadow: 0 0 16px rgba(245, 158, 11, 0.4); }
+  50% { transform: scale(1.05); box-shadow: 0 0 32px rgba(245, 158, 11, 0.7); }
+  100% { transform: scale(0.95); box-shadow: 0 0 16px rgba(245, 158, 11, 0.4); }
+}
+
+@keyframes ring-rotate {
+  to { transform: rotate(360deg); }
+}
+
+.rotating-message {
+  font-size: 0.95rem;
+  color: #fff;
+  font-weight: 500;
+  height: 24px;
+  transition: opacity 0.5s ease-in-out;
+}
+
+/* Success Banner */
+.success-banner {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(16, 185, 129, 0.02) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.25);
+  border-radius: 12px;
+  padding: 24px;
+  text-align: center;
+  margin-bottom: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.success-icon-box {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: rgba(16, 185, 129, 0.2);
+  color: #10b981;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.success-banner h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #fff;
+  margin: 0;
+}
+
+.success-banner p {
+  font-size: 0.85rem;
+  color: var(--db-text-secondary);
+  max-width: 500px;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Responsive adjustment */
+@media (max-width: 600px) {
+  .stepper-nav {
+    padding: 0;
+    margin-bottom: 30px;
+  }
+  .stepper-line {
+    left: 40px;
+    right: 40px;
+  }
+  .step-node {
+    width: 60px;
+  }
+  .step-circle {
+    width: 36px;
+    height: 36px;
+    font-size: 1rem;
+  }
+  .step-label {
+    font-size: 0.75rem;
+  }
+  .step-form-grid {
+    grid-template-columns: 1fr;
+  }
+}
