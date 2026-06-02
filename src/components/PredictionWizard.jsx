@@ -9,8 +9,11 @@ import PredictionStepper from './PredictionStepper';
 import questionsData from '../../public/corequestions.json';
 import api from '../services/api';
 import { 
-  getPredictionProgress, 
+  getPredictionProgress,
+  getStep1Data,
   saveStep1Progress, 
+  editAnswersStep1,
+  checkEditRateLimit,
   saveStep2Progress, 
   saveStep3Progress, 
   resetPredictionProgress,
@@ -44,6 +47,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
   const [optionsDisabled, setOptionsDisabled] = useState(false);
   const [optionsList, setOptionsList] = useState([]);
   const [allowFreeText, setAllowFreeText] = useState(false);
+  const [locationError, setLocationError] = useState('');
   
   const chatEndRef = useRef(null);
 
@@ -150,6 +154,19 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
   // ----------------------------------------------------
   const handleGeocodingLookup = async () => {
     if (!latitude || !longitude) return;
+    
+    const latNum = parseFloat(latitude);
+    const lonNum = parseFloat(longitude);
+    if (isNaN(latNum) || latNum < -90.0 || latNum > 90.0) {
+      setLocationError("Latitude must be between -90 and 90 degrees.");
+      return;
+    }
+    if (isNaN(lonNum) || lonNum < -180.0 || lonNum > 180.0) {
+      setLocationError("Longitude must be between -180 and 180 degrees.");
+      return;
+    }
+
+    setLocationError('');
     setStep1Stage('resolving');
     setResolvedAddress('');
 
@@ -176,10 +193,16 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
   const handleConfirmLocation = () => {
     setStep1Stage('chat');
     setMessages([]);
+    
+    let sanitizedAddress = resolvedAddress || '';
+    if (sanitizedAddress.length > 500) {
+      sanitizedAddress = sanitizedAddress.substring(0, 500);
+    }
+
     setAnswers({
       latitude: parseFloat(latitude),
       longitude: parseFloat(longitude),
-      resolvedAddress: resolvedAddress
+      resolvedAddress: sanitizedAddress
     });
     setCurrentNodeId('q_welcome');
   };
@@ -209,29 +232,52 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
   const handleUserAnswer = async (answerText) => {
     if (optionsDisabled || isTyping) return;
     setOptionsDisabled(true);
-    setMessages(prev => [...prev, { id: Math.random().toString(), sender: 'user', text: answerText }]);
+
+    // Enforce value limit of 1000 characters per answer
+    let processedAnswer = answerText || '';
+    if (processedAnswer.length > 1000) {
+      processedAnswer = processedAnswer.substring(0, 1000);
+    }
+
+    setMessages(prev => [...prev, { id: Math.random().toString(), sender: 'user', text: processedAnswer }]);
     
     const currentNode = questionsData[currentNodeId];
+
+    // Enforce key limit of 100 characters per answer entry key
+    let key = currentNode.id || '';
+    if (key.length > 100) {
+      key = key.substring(0, 100);
+    }
+
+    // Enforce maximum of 50 answer entries limit (including initial location fields)
+    const answersKeys = Object.keys(answers);
+    if (answersKeys.length >= 50 && !answers[key]) {
+      await addAiMessageWithTyping("Maximum answer entries limit reached (50). Transitioning to review...");
+      setStep1Stage('preview');
+      return;
+    }
+
     const newAnswers = {
       ...answers,
-      [currentNode.id]: answerText
+      [key]: processedAnswer
     };
     setAnswers(newAnswers);
 
-    const matchedReaction = findKeywordMatch(currentNode.reactions, answerText);
+    const matchedReaction = findKeywordMatch(currentNode.reactions, processedAnswer);
     if (matchedReaction && matchedReaction.message) {
-      const messageText = matchedReaction.message.replace('{answer}', answerText);
+      const messageText = matchedReaction.message.replace('{answer}', processedAnswer);
       await addAiMessageWithTyping(messageText);
     }
     
-    const matchedNext = findKeywordMatch(currentNode.next, answerText);
+    const matchedNext = findKeywordMatch(currentNode.next, processedAnswer);
     const nextNodeId = matchedNext ? matchedNext.node : null;
     
     if (nextNodeId && questionsData[nextNodeId]) {
       setCurrentNodeId(nextNodeId);
     } else {
-      // Completed all questions in chatbot
-      await completeStep1(newAnswers);
+      // Completed all questions in chatbot - transition to preview screen
+      await delay(1200);
+      setStep1Stage('preview');
     }
   };
 
@@ -242,29 +288,88 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
     handleUserAnswer(val);
   };
 
-  const completeStep1 = async (finalAnswers) => {
+  const completeStep1 = async (finalAnswers, editMode = false) => {
+    const tokenMsg = editMode
+      ? "Saving your edited answers will NOT consume any tokens. Do you want to proceed?"
+      : "Submitting your siting questionnaire answers will consume 10 tokens. Do you want to proceed?";
+
+    const confirmed = window.confirm(tokenMsg);
+    if (!confirmed) return;
+
     setIsTyping(true);
-    await addAiMessageWithTyping("Fantastic! I've noted down all your details. Step 1 is complete! Click the button below to fetch weather data. 🌤️");
-    
+
+    let sanitizedAddress = resolvedAddress || '';
+    if (sanitizedAddress.length > 500) {
+      sanitizedAddress = sanitizedAddress.substring(0, 500);
+    }
+
     const locationObj = {
       lat: parseFloat(latitude),
       lon: parseFloat(longitude),
-      address: resolvedAddress
+      address: sanitizedAddress
     };
 
-    // Save to backend immediately
-    const saved = await saveStep1Progress(userId, locationObj, finalAnswers);
-    
-    setProgress(prev => ({
-      ...prev,
-      step1: {
-        completed: true,
-        location: locationObj,
-        answers: finalAnswers
+    if (editMode) {
+      try {
+        // Edit mode: only update answers in MongoDB, no credit deduction
+        await editAnswersStep1(userId, finalAnswers);
+        
+        // Clear cached Step 1 data so the next "Edit Answers" click fetches fresh data
+        localStorage.removeItem(`step1_edit_cache_${userId}`);
+
+        setProgress(prev => ({
+          ...prev,
+          step1: {
+            ...prev.step1,
+            answers: finalAnswers
+          }
+        }));
+        // Reset active step back to where the user was (Step 3 if weather fetch is done, otherwise Step 2)
+        if (progress.step2.completed) {
+          setActiveStep(3);
+        } else {
+          setActiveStep(2);
+        }
+        setStep1Stage('chat'); // Return to default chat stage for future edits
+      } catch (error) {
+        console.error("Failed to save edited answers:", error);
+        let errorMsg = "Failed to save edited answers. Please try again.";
+        if (error.response && error.response.status === 429) {
+          errorMsg = "You are editing answers too frequently. Please wait an hour before trying again.";
+        } else if (error.response && error.response.data && error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+        alert(errorMsg);
       }
-    }));
+    } else {
+      try {
+        await addAiMessageWithTyping("Fantastic! I've noted down all your details. Step 1 is complete! Click the button below to fetch weather data. 🌤️");
+
+        // Save to backend immediately
+        await saveStep1Progress(userId, locationObj, finalAnswers);
+
+        setProgress(prev => ({
+          ...prev,
+          step1: {
+            completed: true,
+            location: locationObj,
+            answers: finalAnswers
+          }
+        }));
+        setActiveStep(2);
+      } catch (error) {
+        console.error("Failed to save Step 1 progress:", error);
+        let errorMsg = "Failed to complete Step 1. Please try again.";
+        if (error.response && error.response.status === 429) {
+          errorMsg = "You are performing this action too frequently. Please try again later.";
+        } else if (error.response && error.response.data && error.response.data.message) {
+          errorMsg = error.response.data.message;
+        }
+        alert(errorMsg);
+      }
+    }
+
     setIsTyping(false);
-    setActiveStep(2);
   };
 
   useEffect(() => {
@@ -464,7 +569,10 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                         className="input-box"
                         placeholder="e.g. 19.0760"
                         value={latitude}
-                        onChange={(e) => setLatitude(e.target.value)}
+                        onChange={(e) => {
+                          setLatitude(e.target.value);
+                          if (locationError) setLocationError('');
+                        }}
                       />
                     </div>
                     <div className="input-field-group">
@@ -476,7 +584,10 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                         className="input-box"
                         placeholder="e.g. 72.8777"
                         value={longitude}
-                        onChange={(e) => setLongitude(e.target.value)}
+                        onChange={(e) => {
+                          setLongitude(e.target.value);
+                          if (locationError) setLocationError('');
+                        }}
                       />
                     </div>
                   </div>
@@ -493,6 +604,11 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                       Open Google Maps → Right-click your roof/site → Click coordinates to copy
                     </span>
                   </div>
+                  {locationError && (
+                    <div style={{ color: '#ef4444', fontSize: '0.85rem', marginTop: '12px', fontWeight: '500' }}>
+                      ⚠️ {locationError}
+                    </div>
+                  )}
                   <div className="step-actions">
                     <button
                       className="action-btn-primary"
@@ -579,17 +695,50 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
 
                       {allowFreeText && (
                         <div className="chat-input-area">
-                          <input
-                            type="text"
-                            className="chat-input"
-                            placeholder="Type your answer here..."
-                            value={userInputValue}
-                            disabled={optionsDisabled || isTyping}
-                            onChange={(e) => setUserInputValue(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleSendFreeText();
-                            }}
-                          />
+                          <div className="chat-input-wrapper" style={{ position: 'relative', flex: 1, display: 'flex', alignItems: 'center' }}>
+                            <input
+                              type="text"
+                              className="chat-input"
+                              placeholder="Type your answer here..."
+                              value={userInputValue}
+                              disabled={optionsDisabled || isTyping}
+                              maxLength={1000}
+                              onChange={(e) => {
+                                if (e.target.value.length <= 1000) {
+                                  setUserInputValue(e.target.value);
+                                }
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSendFreeText();
+                              }}
+                              style={{ paddingRight: '80px' }}
+                            />
+                            <span 
+                              className="chat-char-counter" 
+                              style={{ 
+                                position: 'absolute', 
+                                right: '12px', 
+                                fontSize: '0.75rem', 
+                                fontWeight: '600',
+                                fontFamily: 'monospace',
+                                pointerEvents: 'none',
+                                color: userInputValue.length >= 1000 
+                                  ? '#ef4444' 
+                                  : userInputValue.length >= 800 
+                                    ? '#f59e0b' 
+                                    : 'var(--db-text-muted, #8b8b8f)', 
+                                transition: 'color 0.2s ease',
+                                background: 'rgba(20, 20, 25, 0.75)',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                border: userInputValue.length >= 800 
+                                  ? (userInputValue.length >= 1000 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)')
+                                  : '1px solid rgba(255, 255, 255, 0.05)'
+                              }}
+                            >
+                              {userInputValue.length}/1000
+                            </span>
+                          </div>
                           <button
                             className="chat-send-btn"
                             disabled={optionsDisabled || isTyping || !userInputValue.trim()}
@@ -603,13 +752,228 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                   </div>
                 </div>
               )}
+
+              {step1Stage === 'preview' && (
+                <div className="preview-answers-wrapper" style={{ marginTop: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <h4 style={{ color: '#fff', margin: 0, fontSize: '1rem', fontWeight: '600' }}>
+                      📋 Review &amp; Edit Questionnaire Answers
+                    </h4>
+                    <button 
+                      className="action-btn-secondary"
+                      style={{ fontSize: '0.75rem', padding: '6px 12px', height: 'auto' }}
+                      onClick={() => setStep1Stage('chat')}
+                    >
+                      Back to Chat
+                    </button>
+                  </div>
+
+                  <div style={{ padding: '12px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem', color: 'var(--db-text-secondary)', marginBottom: '16px' }}>
+                    <strong>📍 Installation Site Location</strong>
+                    <span>Address: {resolvedAddress || `${latitude}, ${longitude}`}</span>
+                    <span>Coords: {latitude}, {longitude}</span>
+                  </div>
+
+                  <div className="preview-list" style={{ display: 'flex', flexDirection: 'column', gap: '14px', overflowY: 'auto', maxHeight: '380px', paddingRight: '4px', marginBottom: '20px' }}>
+                    {Object.keys(answers)
+                      .filter(key => questionsData[key] && !questionsData[key].isIntro)
+                      .map((key) => {
+                        const question = questionsData[key];
+                        return (
+                          <div 
+                            key={key} 
+                            style={{ 
+                              background: 'rgba(255,255,255,0.02)', 
+                              border: '1px solid rgba(255,255,255,0.06)', 
+                              borderRadius: '8px', 
+                              padding: '12px 16px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              gap: '8px'
+                            }}
+                          >
+                            <div style={{ fontSize: '0.8rem', color: 'var(--db-text-secondary)', fontWeight: '500' }}>
+                              {question.questionText}
+                            </div>
+                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                              <textarea
+                                className="chat-input"
+                                value={answers[key] || ''}
+                                maxLength={1000}
+                                onChange={(e) => {
+                                  if (e.target.value.length <= 1000) {
+                                    setAnswers(prev => ({
+                                      ...prev,
+                                      [key]: e.target.value
+                                    }));
+                                  }
+                                }}
+                                rows={2}
+                                style={{ 
+                                  width: '100%', 
+                                  background: 'rgba(0,0,0,0.2)', 
+                                  border: '1px solid rgba(255,255,255,0.1)', 
+                                  color: '#fff', 
+                                  borderRadius: '6px', 
+                                  padding: '8px 10px', 
+                                  fontSize: '0.85rem',
+                                  resize: 'vertical',
+                                  outline: 'none',
+                                  paddingRight: '60px',
+                                  minHeight: '60px',
+                                  lineHeight: '1.4'
+                                }}
+                              />
+                              <span 
+                                style={{ 
+                                  position: 'absolute', 
+                                  right: '10px', 
+                                  bottom: '8px', 
+                                  fontSize: '0.7rem', 
+                                  fontFamily: 'monospace',
+                                  color: (answers[key] || '').length >= 1000 
+                                    ? '#ef4444' 
+                                    : (answers[key] || '').length >= 800 
+                                      ? '#f59e0b' 
+                                      : 'var(--db-text-muted)',
+                                  background: 'rgba(20,20,25,0.85)',
+                                  padding: '2px 4px',
+                                  borderRadius: '3px',
+                                  pointerEvents: 'none'
+                                }}
+                              >
+                                {(answers[key] || '').length}/1000
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+
+                  <div className="step-actions" style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+                    <button 
+                      className="action-btn-secondary" 
+                      onClick={() => {
+                        // Restart chat
+                        let sanitizedAddress = resolvedAddress || '';
+                        if (sanitizedAddress.length > 500) {
+                          sanitizedAddress = sanitizedAddress.substring(0, 500);
+                        }
+                        setAnswers({
+                          latitude: parseFloat(latitude),
+                          longitude: parseFloat(longitude),
+                          resolvedAddress: sanitizedAddress
+                        });
+                        setMessages([]);
+                        setCurrentNodeId('q_welcome');
+                        setStep1Stage('chat');
+                      }}
+                    >
+                      Restart Chat
+                    </button>
+                    <button 
+                      className="action-btn-primary" 
+                      onClick={() => completeStep1(answers, progress.step1.completed)}
+                    >
+                      {progress.step1.completed ? 'Save Edited Answers' : 'Confirm & Submit'}
+                      <ArrowRight size={14} />
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
           {progress.step1.completed && (
-            <div className="step-summary-view" style={{ fontSize: '0.85rem', color: 'var(--db-text-secondary)', marginTop: '8px' }}>
+            <div className="step-summary-view" style={{ fontSize: '0.85rem', color: 'var(--db-text-secondary)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <span className="summary-pill" style={{ color: 'var(--db-success)' }}>✓ Location Confirmed ({progress.step1.location?.lat.toFixed(4)}, {progress.step1.location?.lon.toFixed(4)})</span>
-              <span className="summary-pill" style={{ marginLeft: '12px' }}>✓ Siting Chat Questionnaire Complete</span>
+              <span className="summary-pill">✓ Siting Chat Questionnaire Complete</span>
+              <button
+                style={{
+                  background: 'rgba(245,158,11,0.1)',
+                  border: '1px solid rgba(245,158,11,0.25)',
+                  color: 'var(--db-accent)',
+                  borderRadius: '6px',
+                  padding: '4px 10px',
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease'
+                }}
+                onClick={async () => {
+                  try {
+                    setIsTyping(true);
+                    
+                    // 1. Check rate limit
+                    const limitCheck = await checkEditRateLimit();
+                    if (!limitCheck.allowed) {
+                      const mins = Math.ceil(limitCheck.retryAfterSeconds / 60);
+                      alert(`You are editing answers too frequently. Please wait ${mins} minute(s) before trying again.`);
+                      setIsTyping(false);
+                      return;
+                    }
+
+                    // 2. Fetch fresh progress data from MongoDB (using new getStep1Data with frontend memory caching)
+                    let freshProgress = null;
+                    const cacheKey = `step1_edit_cache_${userId}`;
+                    const cachedStr = localStorage.getItem(cacheKey);
+
+                    try {
+                      if (cachedStr) {
+                        freshProgress = JSON.parse(cachedStr);
+                      } else {
+                        freshProgress = await getStep1Data(userId);
+                        localStorage.setItem(cacheKey, JSON.stringify(freshProgress));
+                      }
+                    } catch (err) {
+                      if (err.response && err.response.status === 429) {
+                        alert("You have reached the maximum fetch limit for Step 1 data (2 requests per 30 mins). Using previously loaded data.");
+                      } else {
+                        console.error("Error fetching step1 data", err);
+                      }
+                    }
+
+                    if (freshProgress && freshProgress.location && freshProgress.answers) {
+                      // Update progress state with the fresh MongoDB values
+                      setProgress(prev => ({
+                        ...prev,
+                        step1: {
+                          completed: true,
+                          location: freshProgress.location,
+                          answers: freshProgress.answers
+                        }
+                      }));
+
+                      // Populate local inputs from MongoDB response
+                      setLatitude(String(freshProgress.location.lat || ''));
+                      setLongitude(String(freshProgress.location.lon || ''));
+                      setResolvedAddress(freshProgress.location.address || '');
+                      setAnswers(freshProgress.answers);
+                    } else {
+                      // Fallback to local state if no fresh progress is returned
+                      if (progress.step1.location) {
+                        setLatitude(String(progress.step1.location.lat || ''));
+                        setLongitude(String(progress.step1.location.lon || ''));
+                        setResolvedAddress(progress.step1.location.address || '');
+                      }
+                      if (progress.step1.answers) {
+                        setAnswers(progress.step1.answers);
+                      }
+                    }
+
+                    // 3. Switch view to edit preview
+                    setActiveStep(1);
+                    setStep1Stage('preview');
+                  } catch (error) {
+                    console.error("Failed to check rate limit or fetch fresh data:", error);
+                    alert("Unable to fetch the questionnaire data. Please check your connection and try again.");
+                  } finally {
+                    setIsTyping(false);
+                  }
+                }}
+              >
+                ✏️ Edit Answers
+              </button>
             </div>
           )}
         </div>

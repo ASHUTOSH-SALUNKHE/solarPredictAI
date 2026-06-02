@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, CheckCircle2, Loader2, ArrowLeft, ShieldCheck } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import { verifyCaptcha, registerUser, verifyOtp, resendOtp } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -298,7 +299,36 @@ const RegisterPage = () => {
   };
 
   return (
-    <div className="auth-container">
+    <main className="auth-container" id="main-content">
+      <Helmet>
+        <title>Create Account | SolarPredict AI</title>
+        <meta name="description" content="Register for SolarPredict AI to predict the future of solar energy with advanced machine learning and real-time atmospheric data." />
+        <link rel="canonical" href="https://solarpredictai.xyz/register" />
+        {/* JSON-LD Structured Data for Breadcrumbs */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://solarpredictai.xyz/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Register",
+                  "item": "https://solarpredictai.xyz/register"
+                }
+              ]
+            }
+          `}
+        </script>
+      </Helmet>
+
       <motion.div 
         className="auth-card"
         initial={{ opacity: 0, y: 20 }}
@@ -349,6 +379,8 @@ const RegisterPage = () => {
                     value={formData.name}
                     onChange={handleInputChange}
                     required
+                    title="Enter your full name"
+                    aria-label="Full Name"
                   />
                 </div>
               </div>
@@ -364,6 +396,8 @@ const RegisterPage = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
+                    title="Enter a valid email address"
+                    aria-label="Email Address"
                   />
                 </div>
               </div>
@@ -379,6 +413,8 @@ const RegisterPage = () => {
                     value={formData.password}
                     onChange={handleInputChange}
                     required
+                    title="Choose a secure password"
+                    aria-label="Password"
                   />
                 </div>
               </div>
@@ -414,6 +450,8 @@ const RegisterPage = () => {
                 type="submit" 
                 className="submit-btn"
                 disabled={isLoading || !captchaToken}
+                title="Create your account"
+                aria-label="Sign Up"
               >
                 {isLoading ? (
                   <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
@@ -498,7 +536,7 @@ const RegisterPage = () => {
           )}
         </AnimatePresence>
       </motion.div>
-    </div>
+    </main>
   );
 };
 

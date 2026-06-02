@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Search, HelpCircle, CloudSun, Target } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import '../styles/home.css';
 
 // CountUp Helper Component for Stats Animation
@@ -68,6 +69,7 @@ const CountUp = ({ end, duration = 2000, prefix = '', suffix = '', format = true
 const HomePage = () => {
   const videoRef = useRef(null);
   const [activeStep, setActiveStep] = useState(0);
+  const [activeFaq, setActiveFaq] = useState(null);
 
   // Steps data representing the AI Workflow
   const steps = [
@@ -261,9 +263,124 @@ const HomePage = () => {
 
   const progressHeight = (activeStep / (steps.length - 1)) * 100;
 
+  const faqData = [
+    {
+      question: "What is a solar panel prediction AI, and how does it work?",
+      answer: "A solar panel prediction AI uses machine learning algorithms (like our Nitro Engine) to analyze historical weather patterns, real-time solar irradiance, and panel specifications to forecast solar energy generation for any location."
+    },
+    {
+      question: "How accurate is SolarPredict AI's forecasting engine?",
+      answer: "Our Nitro Engine achieves a 99.2% accuracy rate in solar energy output prediction by pulling real-time weather telemetries and simulating local irradiance curves."
+    },
+    {
+      question: "Why is a solar panel prediction model essential for grid operations?",
+      answer: "A solar panel prediction model helps utility operators and homeowners balance energy grids, optimize battery storage, and reduce operational waste by anticipating peak generation times."
+    },
+    {
+      question: "Can I use SolarPredict AI for residential solar setups?",
+      answer: "Yes. SolarPredict AI scales from large utility farms to residential solar systems. By entering your panel specs and geographical coordinates, you get a custom solar generation forecast."
+    }
+  ];
+
   return (
-    <>
-      <div className="hero-section">
+    <main id="main-content">
+      <Helmet>
+        <title>Solar Panel Prediction AI & Output Forecasting | SolarPredict AI</title>
+        <meta name="description" content="SolarPredict AI is the leading solar panel prediction AI platform. Forecast solar energy generation, optimize grid output, and predict efficiency with 99% accuracy." />
+        <meta name="keywords" content="solar panel prediction ai, solar output prediction, solar forecasting, machine learning energy, smart grid optimization, photovoltaic prediction software, solar weather data" />
+        <link rel="canonical" href="https://solarpredictai.xyz/" />
+        
+        {/* Open Graph / Facebook */}
+        <meta property="og:type" content="website" />
+        <meta property="og:url" content="https://solarpredictai.xyz/" />
+        <meta property="og:title" content="Solar Panel Prediction AI & Output Forecasting | SolarPredict AI" />
+        <meta property="og:description" content="SolarPredict AI is the leading solar panel prediction AI platform. Forecast solar energy generation, optimize grid output, and predict efficiency with 99% accuracy." />
+        <meta property="og:image" content="https://solarpredictai.xyz/solar_house.webp" />
+        <meta property="og:site_name" content="SolarPredict AI" />
+
+        {/* Twitter */}
+        <meta property="twitter:card" content="summary_large_image" />
+        <meta property="twitter:url" content="https://solarpredictai.xyz/" />
+        <meta property="twitter:title" content="Solar Panel Prediction AI & Output Forecasting | SolarPredict AI" />
+        <meta property="twitter:description" content="SolarPredict AI is the leading solar panel prediction AI platform. Forecast solar energy generation, optimize grid output, and predict efficiency with 99% accuracy." />
+        <meta property="twitter:image" content="https://solarpredictai.xyz/solar_house.webp" />
+        <meta property="twitter:image:alt" content="Solar prediction AI forecasting software interface" />
+        
+        <link rel="alternate" hreflang="en" href="https://solarpredictai.xyz/" />
+
+        {/* JSON-LD Structured Data */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@graph": [
+                {
+                  "@type": "WebSite",
+                  "@id": "https://solarpredictai.xyz/#website",
+                  "url": "https://solarpredictai.xyz/",
+                  "name": "SolarPredict AI",
+                  "description": "Solar Energy Forecasting & Analytics Platform",
+                  "potentialAction": {
+                    "@type": "SearchAction",
+                    "target": "https://solarpredictai.xyz/search?q={search_term_string}",
+                    "query-input": "required name=search_term_string"
+                  }
+                },
+                {
+                  "@type": "Organization",
+                  "@id": "https://solarpredictai.xyz/#organization",
+                  "name": "SolarPredict AI",
+                  "url": "https://solarpredictai.xyz/",
+                  "logo": {
+                    "@type": "ImageObject",
+                    "url": "https://solarpredictai.xyz/favicon.svg"
+                  }
+                },
+                {
+                  "@type": "FAQPage",
+                  "@id": "https://solarpredictai.xyz/#faq",
+                  "mainEntity": [
+                    {
+                      "@type": "Question",
+                      "name": "What is a solar panel prediction AI, and how does it work?",
+                      "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "A solar panel prediction AI uses advanced machine learning algorithms (like our Nitro Engine) to analyze weather forecasts, local atmospheric conditions, and panel specifications to forecast solar energy generation for any location."
+                      }
+                    },
+                    {
+                      "@type": "Question",
+                      "name": "How accurate is SolarPredict AI's forecasting engine?",
+                      "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Our Nitro Engine achieves a 99.2% accuracy rate in solar energy output prediction by pulling real-time weather telemetries and simulating local irradiance curves."
+                      }
+                    },
+                    {
+                      "@type": "Question",
+                      "name": "Why is a solar panel prediction model essential for grid operations?",
+                      "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "A solar panel prediction model helps utility operators and homeowners balance energy grids, optimize battery storage, and reduce operational waste by anticipating peak generation times."
+                      }
+                    },
+                    {
+                      "@type": "Question",
+                      "name": "Can I use SolarPredict AI for residential solar setups?",
+                      "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": "Yes. SolarPredict AI scales from large utility farms to residential solar systems. By entering your panel specs and geographical coordinates, you get a custom solar generation forecast."
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          `}
+        </script>
+      </Helmet>
+
+      <section className="hero-section" aria-label="Hero">
         {/* Background Video */}
         <div className="hero-video-wrapper">
           <video
@@ -287,12 +404,12 @@ const HomePage = () => {
         >
           {/* Clean, Massive Hero Title */}
           <motion.h1 className="hero-headline" variants={itemVariants}>
-            Predict the Future of Solar.
+            Solar Panel Prediction AI.
           </motion.h1>
 
           {/* Minimal Subtitle */}
           <motion.p className="hero-subtitle" variants={itemVariants}>
-            Harness advanced machine learning and real-time atmospheric data to optimize your grid operations with unmatched precision.
+            Harness the power of our advanced neural model to predict solar panel energy generation, forecast irradiance, and optimize grid performance with 99% accuracy.
           </motion.p>
 
           {/* Elegant CTA Buttons */}
@@ -324,10 +441,10 @@ const HomePage = () => {
             <div className="scroll-line"></div>
           </div>
         </motion.div>
-      </div>
+      </section>
 
       {/* Stats Section with Counting Animations */}
-      <section className="stats-section" id="features">
+      <section className="stats-section" id="features" aria-label="Key Statistics">
         <div className="stats-container">
           {/* Main Stat Card */}
           <div className="main-stat-wrapper">
@@ -412,7 +529,7 @@ const HomePage = () => {
             <div className="hud-deck">
               {/* Top: Image, fully visible and unblurred */}
               <div className="hud-image-wrapper">
-                <img src="/solar_house.webp" alt="Solar House" className="hud-solar-image" />
+                <img src="/solar_house.webp" alt="Solar powered home with AI prediction interface overlay" className="hud-solar-image" loading="lazy" width="800" height="450" />
               </div>
               
               {/* Bottom: Dynamic telemetry widget */}
@@ -444,7 +561,7 @@ const HomePage = () => {
       </section>
 
       {/* Partners Section */}
-      <section className="partners-section">
+      <section className="partners-section" aria-label="Partner Network">
         <div className="partners-container">
           {/* Left Column */}
           <div className="partners-left">
@@ -503,7 +620,108 @@ const HomePage = () => {
           </div>
         </div>
       </section>
-    </>
+
+      {/* Interactive FAQ Section */}
+      <section className="faq-section" aria-label="Frequently Asked Questions">
+        <div className="faq-container">
+          <span className="section-tag">Answering Your Questions</span>
+          <h2 className="section-title">Solar Panel Prediction AI FAQ</h2>
+          
+          <div className="faq-list">
+            {faqData.map((faq, index) => {
+              const isOpen = activeFaq === index;
+              return (
+                <article 
+                  key={index} 
+                  className={`faq-item glass-card ${isOpen ? 'active' : ''}`}
+                >
+                  <button 
+                    className="faq-question-btn"
+                    onClick={() => setActiveFaq(isOpen ? null : index)}
+                    aria-expanded={isOpen}
+                    aria-controls={`faq-answer-${index}`}
+                    title={faq.question}
+                  >
+                    <span className="faq-question-text">{faq.question}</span>
+                    <span className={`faq-icon-indicator ${isOpen ? 'open' : ''}`}>+</span>
+                  </button>
+                  <div 
+                    id={`faq-answer-${index}`} 
+                    className="faq-answer-wrapper"
+                    aria-hidden={!isOpen}
+                    style={{ 
+                      maxHeight: isOpen ? '200px' : '0',
+                      opacity: isOpen ? 1 : 0,
+                      visibility: isOpen ? 'visible' : 'hidden'
+                    }}
+                  >
+                    <p className="faq-answer-text">{faq.answer}</p>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </div>
+      </section>
+
+      {/* Premium Footer Section */}
+      <footer className="global-footer" aria-label="Site Footer">
+        <div className="footer-container">
+          <div className="footer-grid">
+            {/* Branding Column */}
+            <div className="footer-brand-col">
+              <Link to="/" className="nav-brand" title="SolarPredict AI Home">
+                <div className="brand-icon-wrapper">
+                  <CloudSun size={20} />
+                </div>
+                <span className="brand-text">SolarPredict AI</span>
+              </Link>
+              <p className="footer-brand-desc">
+                Leading the transition to smart, highly-predictive renewable energy grids through neural network analytics.
+              </p>
+            </div>
+
+            {/* Quick Links Column */}
+            <div className="footer-links-col">
+              <h3 className="footer-col-title">Platform</h3>
+              <ul className="footer-links-list">
+                <li><Link to="/login" title="Sign In to Platform">Sign In</Link></li>
+                <li><Link to="/register" title="Sign Up for Platform">Get Started</Link></li>
+                <li><a href="#features" title="Learn Platform Features">Features</a></li>
+              </ul>
+            </div>
+
+            {/* Resources Column */}
+            <div className="footer-links-col">
+              <h3 className="footer-col-title">Resources</h3>
+              <ul className="footer-links-list">
+                <li><a href="https://solarpredictai.xyz/sitemap.xml" target="_blank" rel="noopener noreferrer" title="View XML Sitemap">Sitemap</a></li>
+                <li><a href="/robots.txt" target="_blank" rel="noopener noreferrer" title="View Crawler Directives">Robots.txt</a></li>
+                <li><a href="#" title="Privacy Policy">Privacy Policy</a></li>
+              </ul>
+            </div>
+
+            {/* Contact Column */}
+            <div className="footer-links-col">
+              <h3 className="footer-col-title">Contact</h3>
+              <ul className="footer-links-list">
+                <li><span className="footer-contact-item">support@solarpredictai.xyz</span></li>
+                <li><span className="footer-contact-item">Oakland, California, USA</span></li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="footer-bottom">
+            <span className="footer-copyright">
+              © {new Date().getFullYear()} SolarPredict AI. All rights reserved.
+            </span>
+            <span className="footer-tagline">
+              Empowering solar efficiency globally.
+            </span>
+          </div>
+        </div>
+      </footer>
+    </main>
   );
 };
 

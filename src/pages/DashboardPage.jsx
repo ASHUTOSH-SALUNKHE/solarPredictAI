@@ -5,7 +5,7 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import questionsData from '../../public/corequestions.json';
 import PredictionWizard from '../components/PredictionWizard';
-import { resetPredictionProgress } from '../services/predictionService';
+import { resetPredictionProgress, getStep1Data } from '../services/predictionService';
 import '../styles/predictionWizard.css';
 import { 
   Menu, 
@@ -58,6 +58,34 @@ const DashboardPage = () => {
   // AI Solar Report States
   const [reportData, setReportData] = useState(null);
   const [reportMetadata, setReportMetadata] = useState(null);
+
+  // Siting Data States
+  const [sitingData, setSitingData] = useState(null);
+  const [isLoadingSiting, setIsLoadingSiting] = useState(false);
+
+  useEffect(() => {
+    if (activeTab === 'siting' && !sitingData && !isLoadingSiting) {
+      const fetchSiting = async () => {
+        setIsLoadingSiting(true);
+        try {
+          const cacheKey = `step1_edit_cache_${userId}`;
+          const cachedStr = localStorage.getItem(cacheKey);
+          if (cachedStr) {
+            setSitingData(JSON.parse(cachedStr));
+          } else {
+            const data = await getStep1Data(userId);
+            setSitingData(data);
+            localStorage.setItem(cacheKey, JSON.stringify(data));
+          }
+        } catch (error) {
+          console.error("Failed to fetch siting data:", error);
+        } finally {
+          setIsLoadingSiting(false);
+        }
+      };
+      fetchSiting();
+    }
+  }, [activeTab, sitingData, isLoadingSiting, userId]);
 
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -146,6 +174,7 @@ const DashboardPage = () => {
     { id: 'predictions', label: 'Predictions', icon: <Compass size={18} /> },
     { id: 'management', label: 'Farm Management', icon: <Grid size={18} /> },
     { id: 'health', label: 'System Health', icon: <HeartPulse size={18} /> },
+    { id: 'siting', label: 'Location & Siting Questionnaire', icon: <MapPin size={18} /> },
     { id: 'settings', label: 'Settings', icon: <Settings size={18} /> },
   ];
 
@@ -645,6 +674,79 @@ const DashboardPage = () => {
     );
   };
 
+  // ── Tab: Location & Siting ─────────────────────────────────────────────────
+  const renderSitingTab = () => {
+    if (isLoadingSiting) {
+      return (
+        <div className="empty-state-wrapper">
+          <div style={{ width: 40, height: 40, border: '3px solid var(--db-border)', borderTopColor: 'var(--db-accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+          <p style={{ marginTop: '16px', color: 'var(--db-text-secondary)' }}>Loading Location &amp; Siting Data...</p>
+        </div>
+      );
+    }
+
+    if (!sitingData || (!sitingData.location && !sitingData.answers)) {
+      return (
+        <div className="empty-state-wrapper">
+          <div className="empty-state-card">
+             <div className="empty-state-icon-box">
+                <MapPin size={32} />
+             </div>
+             <h2>No Siting Data Found</h2>
+             <p>You have not completed the Location &amp; Siting Questionnaire yet.</p>
+             <button className="empty-state-cta-btn" onClick={() => setActiveTab('predictions')}>
+               <Sparkles size={16} />
+               Go to Predictions
+             </button>
+          </div>
+        </div>
+      );
+    }
+
+    return (
+      <div className="siting-view-wrapper" style={{ maxWidth: '800px', margin: '0 auto' }}>
+        <div className="data-section-card" style={{ padding: '24px', marginBottom: '24px' }}>
+          <div className="card-header-simple" style={{ marginBottom: '16px' }}>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <MapPin size={20} />
+              Installation Site Location
+            </h2>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--db-text-secondary)' }}>
+            <p><strong style={{ color: '#fff' }}>Address:</strong> {sitingData.location?.address || 'N/A'}</p>
+            <p><strong style={{ color: '#fff' }}>Coordinates:</strong> {sitingData.location?.lat}, {sitingData.location?.lon}</p>
+          </div>
+        </div>
+
+        <div className="data-section-card" style={{ padding: '24px' }}>
+          <div className="card-header-simple" style={{ marginBottom: '16px' }}>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <FileText size={20} />
+              Questionnaire Answers
+            </h2>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+            {sitingData.answers && Object.keys(sitingData.answers)
+              .filter(key => questionsData[key] && !questionsData[key].isIntro)
+              .map((key) => {
+                 const question = questionsData[key];
+                 return (
+                   <div key={key} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '16px' }}>
+                     <div style={{ fontSize: '0.85rem', color: 'var(--db-text-secondary)', fontWeight: '500', marginBottom: '8px' }}>
+                       {question.text}
+                     </div>
+                     <div style={{ color: '#fff', fontSize: '0.95rem', lineHeight: '1.5' }}>
+                       {sitingData.answers[key]}
+                     </div>
+                   </div>
+                 );
+              })}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ── Tab 6: Settings ────────────────────────────────────────────────────────
   const renderSettingsTab = () => {
     return (
@@ -697,6 +799,8 @@ const DashboardPage = () => {
         return renderManagementTab();
       case 'health':
         return renderHealthTab();
+      case 'siting':
+        return renderSitingTab();
       case 'settings':
         return renderSettingsTab();
       default:
@@ -793,11 +897,13 @@ const DashboardPage = () => {
               {activeTab === 'analytics' && 'Solar Analytics Engine'}
               {activeTab === 'management' && 'Photovoltaic Array Manager'}
               {activeTab === 'health' && 'System Health & Diagnostics'}
+              {activeTab === 'siting' && 'Location & Siting Data'}
               {activeTab === 'settings' && 'Control Panel Settings'}
             </h1>
             <p>
               {activeTab === 'overview' && 'Real-time solar telemetry, predictions, and irradiance metrics.'}
               {activeTab === 'predictions' && 'High-resolution solar irradiance modeling and historical weather analysis.'}
+              {activeTab === 'siting' && 'View your saved installation site coordinates and questionnaire answers.'}
               {activeTab === 'analytics' && 'Historical data curves, trend analysis, and variance models.'}
               {activeTab === 'management' && 'Map physical panel strings, configure inverter groups, and monitor localized status.'}
               {activeTab === 'health' && 'Hardware sensor status, grid synchronization, and anomaly analytics.'}

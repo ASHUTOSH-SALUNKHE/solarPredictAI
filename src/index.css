@@ -253,3 +253,18 @@ body {
   text-decoration: underline;
   font-weight: 700;
 }
+
+/* Accessibility: Skip to Content */
+.skip-to-content {
+  position: absolute;
+  top: -40px;
+  left: 0;
+  background: var(--primary);
+  color: white;
+  padding: 8px;
+  z-index: 9999;
+  transition: top 0.2s ease;
+}
+.skip-to-content:focus {
+  top: 0;
+}

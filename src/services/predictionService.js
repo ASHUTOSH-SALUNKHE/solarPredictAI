@@ -19,6 +19,16 @@ export const getPredictionProgress = async (userId) => {
   }
 };
 
+export const getStep1Data = async (userId) => {
+  try {
+    const response = await api.get('/api/prediction/step1/data');
+    return response.data;
+  } catch (error) {
+    console.warn('[PredictionService] API GET /api/prediction/step1/data failed.', error);
+    throw error;
+  }
+};
+
 export const saveStep1Progress = async (userId, location, answers) => {
   const payload = {
     userId,
@@ -35,6 +45,36 @@ export const saveStep1Progress = async (userId, location, answers) => {
     console.warn('[PredictionService] API POST /api/prediction/step1 failed, saving locally.', error);
     setLocalStorageProgress(userId, payload);
     return payload;
+  }
+};
+
+/**
+ * Checks if the Step 1 questionnaire edit rate limit is exceeded.
+ * Returns { allowed: boolean, retryAfterSeconds: number }
+ */
+export const checkEditRateLimit = async () => {
+  try {
+    const response = await api.get('/api/prediction/step1/edit/check');
+    return response.data;
+  } catch (error) {
+    console.warn('[PredictionService] API GET /api/prediction/step1/edit/check failed.', error);
+    // Fail-open to avoid locking user out due to check endpoint issue
+    return { allowed: true, retryAfterSeconds: 0 };
+  }
+};
+
+/**
+ * Sends only the edited questionnaire answers to the backend.
+ * Location (lat/lon) is NOT changed and NO credits are deducted.
+ */
+export const editAnswersStep1 = async (userId, answers) => {
+  const payload = { answers };
+  try {
+    const response = await api.post('/api/prediction/step1/edit', payload);
+    return response.data;
+  } catch (error) {
+    console.warn('[PredictionService] API POST /api/prediction/step1/edit failed.', error);
+    throw error;
   }
 };
 

@@ -1,0 +1,16 @@
+{
+  "short_name": "SolarPredict",
+  "name": "SolarPredict AI",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "512x512"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0a1916",
+  "display": "standalone",
+  "theme_color": "#123832",
+  "description": "Solar Energy Forecasting & Analytics Platform"
+}

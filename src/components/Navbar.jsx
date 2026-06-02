@@ -32,32 +32,35 @@ const Navbar = () => {
   }, [location]);
 
   return (
-    <nav className={`navbar glass-effect ${isScrolled ? 'navbar-scrolled' : ''}`}>
-      <div className="navbar-container">
-        {/* Brand/Logo */}
-        <Link to="/" className="nav-brand">
-          <div className="brand-icon-wrapper">
-            <Sun size={20} className="brand-icon" />
-          </div>
-          <span className="brand-text">SolarPredict AI</span>
-        </Link>
+    <>
+      {/* Accessibility AA: Skip to main content link */}
+      <a href="#main-content" className="skip-to-content">Skip to main content</a>
+      <nav className={`navbar glass-effect ${isScrolled ? 'navbar-scrolled' : ''}`} aria-label="Main Navigation">
+        <div className="navbar-container">
+          {/* Brand/Logo */}
+          <Link to="/" className="nav-brand" title="SolarPredict AI Home">
+            <div className="brand-icon-wrapper">
+              <Sun size={20} className="brand-icon" />
+            </div>
+            <span className="brand-text">SolarPredict AI</span>
+          </Link>
 
         {/* Desktop Navigation Links */}
         <ul className="nav-menu">
           <li>
-            <Link to="/#features" className="nav-link">Features</Link>
+            <Link to="/#features" className="nav-link" title="View SolarPredict AI Features">Features</Link>
           </li>
           <li>
-            <Link to="/#live-map" className="nav-link">Live Map</Link>
+            <Link to="/#live-map" className="nav-link" title="Explore Live Solar Map">Live Map</Link>
           </li>
           <li>
-            <Link to="/#predictions" className="nav-link">Predictions</Link>
+            <Link to="/#predictions" className="nav-link" title="See Solar Predictions">Predictions</Link>
           </li>
           <li>
-            <Link to="/#pricing" className="nav-link">Pricing</Link>
+            <Link to="/#pricing" className="nav-link" title="View Pricing Options">Pricing</Link>
           </li>
           <li>
-            <Link to="/#about" className="nav-link">About Us</Link>
+            <Link to="/#about" className="nav-link" title="Learn About SolarPredict AI">About Us</Link>
           </li>
         </ul>
 
@@ -65,23 +68,25 @@ const Navbar = () => {
         <div className="nav-actions">
           {isAuthenticated ? (
             <>
-              <Link to="/dashboard" className="btn-signin">
+              <Link to="/dashboard" className="btn-signin" title="Go to Dashboard">
                 Dashboard
               </Link>
               <button 
                 onClick={() => { logout(); navigate('/'); }} 
                 className="btn-signup" 
                 style={{ border: 'none', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}
+                title="Logout of your account"
+                aria-label="Logout"
               >
                 Logout
               </button>
             </>
           ) : (
             <>
-              <Link to="/login" className="btn-signin">
+              <Link to="/login" className="btn-signin" title="Sign In to your account">
                 Sign In
               </Link>
-              <Link to="/register" className="btn-signup">
+              <Link to="/register" className="btn-signup" title="Create a new account">
                 Get Started
               </Link>
             </>
@@ -154,6 +159,7 @@ const Navbar = () => {
         </div>
       </div>
     </nav>
+    </>
   );
 };
 

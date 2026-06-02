@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import { verifyCaptcha } from '../services/api';
 import { useAuth } from '../context/AuthContext';
 
@@ -108,7 +109,36 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="auth-container">
+    <main className="auth-container" id="main-content">
+      <Helmet>
+        <title>Sign In | SolarPredict AI</title>
+        <meta name="description" content="Sign in to your SolarPredict AI account to access advanced solar forecasting, telemetry, and analytics." />
+        <link rel="canonical" href="https://solarpredictai.xyz/login" />
+        {/* JSON-LD Structured Data for Breadcrumbs */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://solarpredictai.xyz/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Login",
+                  "item": "https://solarpredictai.xyz/login"
+                }
+              ]
+            }
+          `}
+        </script>
+      </Helmet>
+      
       <motion.div
         className="auth-card"
         initial={{ opacity: 0, y: 20 }}
@@ -146,6 +176,8 @@ const LoginPage = () => {
                 value={formData.email}
                 onChange={handleInputChange}
                 required
+                title="Enter your registered email address"
+                aria-label="Email Address"
               />
             </div>
           </div>
@@ -161,6 +193,8 @@ const LoginPage = () => {
                 value={formData.password}
                 onChange={handleInputChange}
                 required
+                title="Enter your password"
+                aria-label="Password"
               />
             </div>
             <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '6px' }}>
@@ -199,6 +233,8 @@ const LoginPage = () => {
             type="submit"
             className="submit-btn"
             disabled={isLoading || !captchaToken}
+            title="Sign in to your account"
+            aria-label="Sign In"
           >
             {isLoading ? (
               <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
@@ -214,7 +250,7 @@ const LoginPage = () => {
           </p>
         </div>
       </motion.div>
-    </div>
+    </main>
   );
 };
 

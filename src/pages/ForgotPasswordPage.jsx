@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { Turnstile } from '@marsidev/react-turnstile';
 import { motion, AnimatePresence } from 'framer-motion';
 import { AlertCircle, CheckCircle2, Loader2, ArrowLeft, ShieldCheck, Eye, EyeOff } from 'lucide-react';
+import { Helmet } from 'react-helmet-async';
 import { verifyCaptcha, requestPasswordReset, verifyPasswordResetOtp, resendPasswordResetOtp } from '../services/api';
 
 const ForgotPasswordPage = () => {
@@ -293,7 +294,36 @@ const ForgotPasswordPage = () => {
   };
 
   return (
-    <div className="auth-container">
+    <main className="auth-container" id="main-content">
+      <Helmet>
+        <title>Forgot Password | SolarPredict AI</title>
+        <meta name="description" content="Reset your password for SolarPredict AI." />
+        <link rel="canonical" href="https://solarpredictai.xyz/forgot-password" />
+        {/* JSON-LD Structured Data for Breadcrumbs */}
+        <script type="application/ld+json">
+          {`
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "itemListElement": [
+                {
+                  "@type": "ListItem",
+                  "position": 1,
+                  "name": "Home",
+                  "item": "https://solarpredictai.xyz/"
+                },
+                {
+                  "@type": "ListItem",
+                  "position": 2,
+                  "name": "Forgot Password",
+                  "item": "https://solarpredictai.xyz/forgot-password"
+                }
+              ]
+            }
+          `}
+        </script>
+      </Helmet>
+
       <motion.div 
         className="auth-card"
         initial={{ opacity: 0, y: 20 }}
@@ -344,6 +374,8 @@ const ForgotPasswordPage = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     required
+                    title="Enter your registered email address"
+                    aria-label="Email Address"
                   />
                 </div>
               </div>
@@ -359,6 +391,8 @@ const ForgotPasswordPage = () => {
                     value={formData.password}
                     onChange={handleInputChange}
                     required
+                    title="Enter your new password"
+                    aria-label="New Password"
                   />
                   <button
                     type="button"
@@ -381,6 +415,8 @@ const ForgotPasswordPage = () => {
                     value={formData.confirmPassword}
                     onChange={handleInputChange}
                     required
+                    title="Confirm your new password"
+                    aria-label="Confirm New Password"
                   />
                   <button
                     type="button"
@@ -423,6 +459,8 @@ const ForgotPasswordPage = () => {
                 type="submit" 
                 className="submit-btn"
                 disabled={isLoading || !captchaToken}
+                title="Send verification code"
+                aria-label="Send Verification Code"
               >
                 {isLoading ? (
                   <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
@@ -507,7 +545,7 @@ const ForgotPasswordPage = () => {
           )}
         </AnimatePresence>
       </motion.div>
-    </div>
+    </main>
   );
 };
 

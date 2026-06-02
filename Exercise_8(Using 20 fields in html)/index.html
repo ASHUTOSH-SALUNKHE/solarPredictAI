@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exercise 8 - HTML Form with 20 Fields</title>
+</head>
+<body>
+    <h1>Learning HTML: Form with 20 Different Fields</h1>
+    <p>This is a simple HTML form containing 20 different types of input fields. No CSS is applied, showing standard browser defaults.</p>
+    
+    <form action="#" method="get">
+        
+        <!-- 1. Text Input -->
+        <div>
+            <label for="username">1. Username (Text):</label>
+            <input type="text" id="username" name="username" placeholder="Enter username">
+        </div>
+        <br>
+
+        <!-- 2. Password Input -->
+        <div>
+            <label for="password">2. Password:</label>
+            <input type="password" id="password" name="password" placeholder="Enter password">
+        </div>
+        <br>
+
+        <!-- 3. Email Input -->
+        <div>
+            <label for="email">3. Email Address:</label>
+            <input type="email" id="email" name="email" placeholder="example@mail.com">
+        </div>
+        <br>
+
+        <!-- 4. Number Input -->
+        <div>
+            <label for="age">4. Age (Number):</label>
+            <input type="number" id="age" name="age" min="1" max="100">
+        </div>
+        <br>
+
+        <!-- 5. Phone Input (Tel) -->
+        <div>
+            <label for="phone">5. Phone Number (Tel):</label>
+            <input type="tel" id="phone" name="phone" placeholder="123-456-7890">
+        </div>
+        <br>
+
+        <!-- 6. URL Input -->
+        <div>
+            <label for="website">6. Website URL:</label>
+            <input type="url" id="website" name="website" placeholder="https://example.com">
+        </div>
+        <br>
+
+        <!-- 7. Date Input -->
+        <div>
+            <label for="birthdate">7. Birth Date:</label>
+            <input type="date" id="birthdate" name="birthdate">
+        </div>
+        <br>
+
+        <!-- 8. Time Input -->
+        <div>
+            <label for="appointment-time">8. Appointment Time:</label>
+            <input type="time" id="appointment-time" name="appointment-time">
+        </div>
+        <br>
+
+        <!-- 9. Datetime-local Input -->
+        <div>
+            <label for="event-datetime">9. Event Date and Time:</label>
+            <input type="datetime-local" id="event-datetime" name="event-datetime">
+        </div>
+        <br>
+
+        <!-- 10. Month Input -->
+        <div>
+            <label for="start-month">10. Start Month:</label>
+            <input type="month" id="start-month" name="start-month">
+        </div>
+        <br>
+
+        <!-- 11. Week Input -->
+        <div>
+            <label for="vacation-week">11. Vacation Week:</label>
+            <input type="week" id="vacation-week" name="vacation-week">
+        </div>
+        <br>
+
+        <!-- 12. Search Input -->
+        <div>
+            <label for="search-query">12. Search Query:</label>
+            <input type="search" id="search-query" name="search-query" placeholder="Search here...">
+        </div>
+        <br>
+
+        <!-- 13. Color Picker -->
+        <div>
+            <label for="fav-color">13. Favorite Color:</label>
+            <input type="color" id="fav-color" name="fav-color" value="#ff0000">
+        </div>
+        <br>
+
+        <!-- 14. Range Slider -->
+        <div>
+            <label for="satisfaction">14. Satisfaction Level (Range):</label>
+            <input type="range" id="satisfaction" name="satisfaction" min="1" max="10">
+        </div>
+        <br>
+
+        <!-- 15. File Upload -->
+        <div>
+            <label for="profile-pic">15. Upload Profile Picture:</label>
+            <input type="file" id="profile-pic" name="profile-pic">
+        </div>
+        <br>
+
+        <!-- 16. Checkbox -->
+        <div>
+            <label>16. Hobbies (Checkbox):</label><br>
+            <input type="checkbox" id="hobby-reading" name="hobby" value="reading">
+            <label for="hobby-reading">Reading</label><br>
+            <input type="checkbox" id="hobby-coding" name="hobby" value="coding" checked>
+            <label for="hobby-coding">Coding</label>
+        </div>
+        <br>
+
+        <!-- 17. Radio Buttons -->
+        <div>
+            <label>17. Gender (Radio):</label><br>
+            <input type="radio" id="gender-male" name="gender" value="male">
+            <label for="gender-male">Male</label><br>
+            <input type="radio" id="gender-female" name="gender" value="female">
+            <label for="gender-female">Female</label><br>
+            <input type="radio" id="gender-other" name="gender" value="other">
+            <label for="gender-other">Other</label>
+        </div>
+        <br>
+
+        <!-- 18. Dropdown Select -->
+        <div>
+            <label for="country">18. Country (Select Dropdown):</label>
+            <select id="country" name="country">
+                <option value="">--Please choose an option--</option>
+                <option value="usa">United States</option>
+                <option value="india">India</option>
+                <option value="uk">United Kingdom</option>
+                <option value="canada">Canada</option>
+            </select>
+        </div>
+        <br>
+
+        <!-- 19. Textarea -->
+        <div>
+            <label for="bio">19. Bio (Textarea):</label><br>
+            <textarea id="bio" name="bio" rows="4" cols="50" placeholder="Tell us about yourself..."></textarea>
+        </div>
+        <br>
+
+        <!-- 20. Buttons -->
+        <div>
+            <label>20. Actions (Submit, Reset, Custom):</label><br>
+            <input type="submit" value="Submit Form">
+            <input type="reset" value="Reset Form">
+            <button type="button" onclick="alert('Hello Beginner!')">Click Me (Button)</button>
+        </div>
+
+    </form>
+</body>
+</html>
