@@ -36,7 +36,7 @@ self.addEventListener('fetch', (event) => {
       caches.match(event.request).then((cachedResponse) => {
         const fetchPromise = fetch(event.request).then((networkResponse) => {
           // Only cache successful responses
-          if (networkResponse.ok && networkResponse.type === 'basic') {
+          if (networkResponse.ok && networkResponse.type === 'basic' && event.request.url.startsWith('http')) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);

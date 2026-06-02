@@ -1,11 +1,12 @@
 import { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, ComposedChart, Bar, Line, Legend } from 'recharts';
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import questionsData from '../../public/corequestions.json';
 import PredictionWizard from '../components/PredictionWizard';
-import { resetPredictionProgress, getStep1Data } from '../services/predictionService';
+import { resetPredictionProgress, getStep1Data, getStep2Data } from '../services/predictionService';
 import '../styles/predictionWizard.css';
 import { 
   Menu, 
@@ -63,6 +64,10 @@ const DashboardPage = () => {
   const [sitingData, setSitingData] = useState(null);
   const [isLoadingSiting, setIsLoadingSiting] = useState(false);
 
+  // Weather Data States
+  const [weatherCacheData, setWeatherCacheData] = useState(null);
+  const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+
   useEffect(() => {
     if (activeTab === 'siting' && !sitingData && !isLoadingSiting) {
       const fetchSiting = async () => {
@@ -86,6 +91,30 @@ const DashboardPage = () => {
       fetchSiting();
     }
   }, [activeTab, sitingData, isLoadingSiting, userId]);
+
+  useEffect(() => {
+    if (activeTab === 'weather' && !weatherCacheData && !isLoadingWeather) {
+      const fetchWeather = async () => {
+        setIsLoadingWeather(true);
+        try {
+          const cacheKey = `step2_data_cache_${userId}`;
+          const cachedStr = localStorage.getItem(cacheKey);
+          if (cachedStr) {
+            setWeatherCacheData(JSON.parse(cachedStr));
+          } else {
+            const data = await getStep2Data(userId);
+            setWeatherCacheData(data);
+            localStorage.setItem(cacheKey, JSON.stringify(data));
+          }
+        } catch (error) {
+          console.error("Failed to fetch weather data:", error);
+        } finally {
+          setIsLoadingWeather(false);
+        }
+      };
+      fetchWeather();
+    }
+  }, [activeTab, weatherCacheData, isLoadingWeather, userId]);
 
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
@@ -175,6 +204,7 @@ const DashboardPage = () => {
     { id: 'management', label: 'Farm Management', icon: <Grid size={18} /> },
     { id: 'health', label: 'System Health', icon: <HeartPulse size={18} /> },
     { id: 'siting', label: 'Location & Siting Questionnaire', icon: <MapPin size={18} /> },
+    { id: 'weather', label: 'Weather Data', icon: <CloudSun size={18} /> },
     { id: 'settings', label: 'Settings', icon: <Settings size={18} /> },
   ];
 
@@ -747,6 +777,111 @@ const DashboardPage = () => {
     );
   };
 
+  // ── Tab: Weather Data ──────────────────────────────────────────────────────
+  const renderWeatherTab = () => {
+    if (isLoadingWeather) {
+      return (
+        <div className="empty-state-wrapper">
+          <div style={{ width: 40, height: 40, border: '3px solid var(--db-border)', borderTopColor: 'var(--db-accent)', borderRadius: '50%', animation: 'spin 1s linear infinite' }}></div>
+          <p style={{ marginTop: '16px', color: 'var(--db-text-secondary)' }}>Loading Weather Data...</p>
+        </div>
+      );
+    }
+
+    if (!weatherCacheData || !weatherCacheData.monthlyData) {
+      return (
+        <div className="empty-state-wrapper">
+          <div className="empty-state-card">
+             <div className="empty-state-icon-box">
+                <CloudSun size={32} />
+             </div>
+             <h2>No Weather Data Found</h2>
+             <p>Generate a solar report in the Predictions tab to compute localized climatology data.</p>
+             <button className="empty-state-cta-btn" onClick={() => setActiveTab('predictions')}>
+               <Sparkles size={16} />
+               Go to Predictions
+             </button>
+          </div>
+        </div>
+      );
+    }
+
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    
+    const chartData = weatherCacheData.monthlyData.map(m => ({
+      name: monthNames[m.month - 1] || `M${m.month}`,
+      Temperature: m.temperatureMean || 0,
+      DNI: m.dniMean || 0,
+      CloudCover: m.cloudcoverMean || 0,
+      Dust: m.dustMean || 0
+    }));
+
+    return (
+      <div className="siting-view-wrapper" style={{ maxWidth: '900px', margin: '0 auto' }}>
+        
+        {/* Dynamic Composed Chart Section */}
+        <div className="data-section-card" style={{ padding: '24px', marginBottom: '24px' }}>
+          <div className="card-header-simple" style={{ marginBottom: '16px' }}>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <TrendingUp size={20} />
+              Annual Climate & Irradiance Trends
+            </h2>
+          </div>
+          
+          <div style={{ width: '100%', height: '350px', marginTop: '20px' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
+                <defs>
+                  <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="left" stroke="rgba(255,255,255,0.4)" fontSize={12} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="right" orientation="right" stroke="rgba(255,255,255,0.4)" fontSize={12} tickLine={false} axisLine={false} />
+                <RechartsTooltip 
+                  contentStyle={{ backgroundColor: 'rgba(20,20,25,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                  itemStyle={{ color: '#fff' }}
+                />
+                <Legend wrapperStyle={{ paddingTop: '20px' }} />
+                <Bar yAxisId="right" dataKey="DNI" name="Direct Normal Irradiance (W/m²)" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
+                <Area yAxisId="left" type="monotone" dataKey="Temperature" name="Avg Temperature (°C)" stroke="#f59e0b" fillOpacity={1} fill="url(#colorTemp)" />
+                <Line yAxisId="left" type="monotone" dataKey="CloudCover" name="Cloud Cover (%)" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
+              </ComposedChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Detailed Grid Breakdown */}
+        <div className="data-section-card" style={{ padding: '24px' }}>
+          <div className="card-header-simple" style={{ marginBottom: '16px' }}>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Calendar size={20} />
+              Monthly Data Breakdown
+            </h2>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
+            {weatherCacheData.monthlyData.map((month, idx) => (
+               <div key={idx} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '16px' }}>
+                 <div style={{ fontSize: '1rem', color: 'var(--db-accent)', fontWeight: '600', marginBottom: '12px' }}>
+                   {monthNames[month.month - 1]}
+                 </div>
+                 <div style={{ color: 'var(--db-text-secondary)', fontSize: '0.85rem', lineHeight: '1.6' }}>
+                   <p><strong style={{ color: '#fff' }}>Temp (Avg):</strong> {formatVal(month.temperatureMean, 1)} °C</p>
+                   <p><strong style={{ color: '#fff' }}>DNI (Avg):</strong> {formatVal(month.dniMean, 1)} W/m²</p>
+                   <p><strong style={{ color: '#fff' }}>Cloud Cover:</strong> {formatVal(month.cloudcoverMean, 1)} %</p>
+                   <p><strong style={{ color: '#fff' }}>Dust (Avg):</strong> {formatVal(month.dustMean, 1)} μg/m³</p>
+                 </div>
+               </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // ── Tab 6: Settings ────────────────────────────────────────────────────────
   const renderSettingsTab = () => {
     return (
@@ -801,6 +936,8 @@ const DashboardPage = () => {
         return renderHealthTab();
       case 'siting':
         return renderSitingTab();
+      case 'weather':
+        return renderWeatherTab();
       case 'settings':
         return renderSettingsTab();
       default:
@@ -898,12 +1035,14 @@ const DashboardPage = () => {
               {activeTab === 'management' && 'Photovoltaic Array Manager'}
               {activeTab === 'health' && 'System Health & Diagnostics'}
               {activeTab === 'siting' && 'Location & Siting Data'}
+              {activeTab === 'weather' && 'Climatology & Irradiance Data'}
               {activeTab === 'settings' && 'Control Panel Settings'}
             </h1>
             <p>
               {activeTab === 'overview' && 'Real-time solar telemetry, predictions, and irradiance metrics.'}
               {activeTab === 'predictions' && 'High-resolution solar irradiance modeling and historical weather analysis.'}
               {activeTab === 'siting' && 'View your saved installation site coordinates and questionnaire answers.'}
+              {activeTab === 'weather' && 'Historical climate parameters, monthly solar irradiance trends, and localized meteorology.'}
               {activeTab === 'analytics' && 'Historical data curves, trend analysis, and variance models.'}
               {activeTab === 'management' && 'Map physical panel strings, configure inverter groups, and monitor localized status.'}
               {activeTab === 'health' && 'Hardware sensor status, grid synchronization, and anomaly analytics.'}

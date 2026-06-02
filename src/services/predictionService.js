@@ -29,6 +29,16 @@ export const getStep1Data = async (userId) => {
   }
 };
 
+export const getStep2Data = async (userId) => {
+  try {
+    const response = await api.get('/api/prediction/step2/data');
+    return response.data;
+  } catch (error) {
+    console.warn('[PredictionService] API GET /api/prediction/step2/data failed.', error);
+    throw error;
+  }
+};
+
 export const saveStep1Progress = async (userId, location, answers) => {
   const payload = {
     userId,
@@ -89,6 +99,8 @@ export const saveStep2Progress = async (userId, weatherData) => {
   };
   try {
     const response = await api.post('/api/prediction/step2', payload);
+    // Clear the detailed weather data cache so the Dashboard tab fetches fresh data
+    localStorage.removeItem(`step2_data_cache_${userId}`);
     return response.data;
   } catch (error) {
     console.warn('[PredictionService] API POST /api/prediction/step2 failed, saving locally.', error);
@@ -141,5 +153,6 @@ export const resetPredictionProgress = async (userId) => {
     console.warn('[PredictionService] API DELETE /api/prediction/progress failed, clearing locally.', error);
   } finally {
     localStorage.removeItem(`prediction_progress_${userId}`);
+    localStorage.removeItem(`step2_data_cache_${userId}`);
   }
 };
