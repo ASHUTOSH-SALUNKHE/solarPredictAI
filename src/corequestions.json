@@ -1,0 +1,1837 @@
+{
+  "_meta": {
+    "version": "2.0.0",
+    "description": "Comprehensive Solar Prediction Chatbot Question Tree",
+    "totalNodes": 52,
+    "entryNode": "q_welcome",
+    "terminalNode": null,
+    "author": "Solar AI Advisor",
+    "note": "Each node with next:[{node:null}] triggers final Gemini API call with compiled answers"
+  },
+  "q_welcome": {
+    "id": "q_welcome",
+    "questionText": "👋 Hey there! I'm Sol, your personal Solar AI Advisor. I'll ask you a few smart questions to generate a highly accurate solar energy prediction for your home or business. Ready to find out how much you can save? Let's go!(If You do not found any option suitable or want to add more information type in the chat and click on the send icon) 🌞",
+    "options": [
+      "Yes, let's do it!",
+      "Sure, I'm ready",
+      "Let's get started"
+    ],
+    "allowFreeText": false,
+    "isIntro": true,
+    "reactions": [
+      {
+        "message": "Awesome! First things first — let me figure out where you are. 📍"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_location"
+      }
+    ]
+  },
+  "q_location": {
+    "id": "q_location",
+    "questionText": "What city or region are you located in? I'll use this to pull live solar irradiance data, climate history, and peak sun hours specific to your area.",
+    "options": [
+      "Mumbai, India",
+      "Delhi, India",
+      "Bangalore, India",
+      "Chennai, India",
+      "Pune, India",
+      "Hyderabad, India",
+      "New York, USA",
+      "London, UK",
+      "Dubai, UAE",
+      "Sydney, Australia"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "mumbai",
+          "pune",
+          "nashik",
+          "maharashtra"
+        ],
+        "message": "Great choice! {answer} gets excellent solar irradiance — especially between October and May. Fetching your local solar data now... ⚡"
+      },
+      {
+        "keywords": [
+          "delhi",
+          "ncr",
+          "gurgaon",
+          "noida"
+        ],
+        "message": "Perfect! {answer} has some of the highest solar potential in India with 5.5–6.5 peak sun hours daily. Pulling your data... 🌞"
+      },
+      {
+        "keywords": [
+          "bangalore",
+          "bengaluru",
+          "mysore"
+        ],
+        "message": "Nice! {answer} has a very pleasant climate for solar — moderate temperatures keep panel efficiency high. Fetching data... ☀️"
+      },
+      {
+        "keywords": [
+          "chennai",
+          "tamil",
+          "coimbatore"
+        ],
+        "message": "Excellent! {answer} has one of the best solar profiles in India — hot, sunny, and consistent. Loading your irradiance data... 🔆"
+      },
+      {
+        "keywords": [
+          "london",
+          "uk",
+          "england",
+          "manchester"
+        ],
+        "message": "Got it! {answer} has lower irradiance but solar still makes strong economic sense with UK feed-in incentives. Fetching data... 🌤️"
+      },
+      {
+        "keywords": [
+          "dubai",
+          "uae",
+          "abu dhabi"
+        ],
+        "message": "Wow, {answer}! One of the sunniest places on Earth — incredible solar potential. Pulling your data... ☀️🔥"
+      },
+      {
+        "keywords": [
+          "sydney",
+          "australia",
+          "melbourne",
+          "brisbane"
+        ],
+        "message": "Nice! Australia's solar incentives combined with high irradiance make {answer} a solar powerhouse. Fetching your data... ⚡"
+      },
+      {
+        "message": "Got it! Fetching live solar irradiance and climate data for {answer} right now... 🛰️"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_installation_type"
+      }
+    ]
+  },
+  "q_installation_type": {
+    "id": "q_installation_type",
+    "questionText": "Are you looking at solar for your home or for a business/commercial property?",
+    "options": [
+      "🏠 Residential (Home)",
+      "🏢 Commercial (Business/Office)",
+      "🏭 Industrial (Factory/Warehouse)",
+      "🌾 Agricultural (Farm/Greenhouse)"
+    ],
+    "allowFreeText": false,
+    "reactions": [
+      {
+        "keywords": [
+          "residential",
+          "home"
+        ],
+        "message": "Perfect! Home solar setups are the most common and typically have the fastest payback period. Let's dig into your home setup. 🏠"
+      },
+      {
+        "keywords": [
+          "commercial",
+          "business",
+          "office"
+        ],
+        "message": "Smart move! Commercial solar can dramatically cut operating costs and even generate revenue through net metering. 🏢"
+      },
+      {
+        "keywords": [
+          "industrial",
+          "factory",
+          "warehouse"
+        ],
+        "message": "Industrial solar — big scale, big savings! We'll need a few more details to size this properly. 🏭"
+      },
+      {
+        "keywords": [
+          "agricultural",
+          "farm"
+        ],
+        "message": "Agri-solar is booming! You may even qualify for special government subsidies. Let's assess your setup. 🌾"
+      }
+    ],
+    "next": [
+      {
+        "keywords": [
+          "residential",
+          "home"
+        ],
+        "node": "q_goal"
+      },
+      {
+        "keywords": [
+          "commercial",
+          "business"
+        ],
+        "node": "q_commercial_size_in_sqft"
+      },
+      {
+        "keywords": [
+          "industrial",
+          "factory"
+        ],
+        "node": "q_commercial_size_in_sqft"
+      },
+      {
+        "keywords": [
+          "agricultural",
+          "farm"
+        ],
+        "node": "q_goal"
+      },
+      {
+        "node": "q_goal"
+      }
+    ]
+  },
+  "q_commercial_size_in_sqft": {
+    "id": "q_commercial_size_in_sqft",
+    "questionText": "What is the approximate built-up area of your commercial or industrial property (eg: 1000 sq ft)?",
+    "options": [],
+    "allowFreeText": true,
+    "reactions": [],
+    "next": [
+      {
+        "node": "q_goal"
+      }
+    ]
+  },
+  "q_goal": {
+    "id": "q_goal",
+    "questionText": "What is your primary goal for going solar? (Pick the one that matters most to you/ Type in the chat)",
+    "options": [
+      "💰 Reduce my electricity bills",
+      "🔋 Energy independence / backup power",
+      "🌍 Reduce my carbon footprint",
+      "📈 Increase property value",
+      "🏛️ Take advantage of government subsidies"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "bill",
+          "electricity",
+          "reduce",
+          "save",
+          "money",
+          "cost"
+        ],
+        "message": "Smart thinking! That's the #1 reason people go solar — and in most cases, the system pays for itself in 4–7 years. 💰"
+      },
+      {
+        "keywords": [
+          "independence",
+          "backup",
+          "power cut",
+          "outage",
+          "grid"
+        ],
+        "message": "Energy independence is priceless! We'll make sure to explore battery storage options for you. 🔋"
+      },
+      {
+        "keywords": [
+          "carbon",
+          "environment",
+          "green",
+          "climate",
+          "eco"
+        ],
+        "message": "Absolutely love it! Each kWh of solar prevents roughly 0.85 kg of CO2. You're making a real difference. 🌍"
+      },
+      {
+        "keywords": [
+          "property",
+          "value",
+          "resale",
+          "home value"
+        ],
+        "message": "Great investment angle! Studies show solar can increase property value by 3–4% on average. 📈"
+      },
+      {
+        "keywords": [
+          "subsidy",
+          "government",
+          "scheme",
+          "incentive"
+        ],
+        "message": "Excellent timing! There are some great subsidies available right now. I'll factor those into the financial analysis. 🏛️"
+      },
+      {
+        "message": "That's a great reason! I'll make sure the prediction aligns with your core goal."
+      }
+    ],
+    "next": [
+      {
+        "node": "q_existing_system"
+      }
+    ]
+  },
+  "q_existing_system": {
+    "id": "q_existing_system",
+    "questionText": "Do you already have a solar panel system installed, or are you planning a fresh installation?",
+    "options": [
+      "🆕 Fresh installation (no existing panels)",
+      "🔄 Already have panels (looking to expand or optimize)",
+      "🔧 Have panels but they're underperforming",
+      "📊 Just want to evaluate potential before deciding"
+    ],
+    "allowFreeText": false,
+    "reactions": [
+      {
+        "keywords": [
+          "fresh",
+          "new",
+          "no existing"
+        ],
+        "message": "Great, we're starting from scratch! I'll calculate the ideal system size for you. 🆕"
+      },
+      {
+        "keywords": [
+          "already",
+          "expand",
+          "existing"
+        ],
+        "message": "Perfect! We'll build on what you have and see how much more capacity you can add. 🔄"
+      },
+      {
+        "keywords": [
+          "underperform",
+          "performing"
+        ],
+        "message": "I'll help identify why and what can be done — sometimes it's just a cleaning issue, sometimes it needs technical attention. 🔧"
+      },
+      {
+        "keywords": [
+          "evaluate",
+          "potential",
+          "deciding"
+        ],
+        "message": "Smart approach — let's do a full potential analysis so you can make an informed decision. 📊"
+      }
+    ],
+    "next": [
+      {
+        "keywords": [
+          "already",
+          "expand",
+          "underperform"
+        ],
+        "node": "q_existing_panel_capacity_kw"
+      },
+      {
+        "node": "q_monthly_bill_in_currency"
+      }
+    ]
+  },
+  "q_existing_panel_capacity_kw": {
+    "id": "q_existing_panel_capacity_kw",
+    "questionText": "How many panels do you currently have installed and total capacity of the pannels?(eg: 5 panels, 2 kW system)",
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "message": "Got it! I'll use your existing {answer} as the baseline and calculate how much additional capacity would be optimal."
+      }
+    ],
+    "next": [
+      {
+        "node": "q_existing_panel_age_in_years"
+      }
+    ]
+  },
+  "q_existing_panel_age_in_years": {
+    "id": "q_existing_panel_age_in_years",
+    "questionText": "How old are your existing solar panels?",
+    "options": [
+      "Less than 2 years",
+      "2 – 5 years",
+      "5 – 10 years",
+      "More than 10 years"
+    ],
+    "allowFreeText": false,
+    "reactions": [
+      {
+        "keywords": [
+          "less than 2",
+          "new"
+        ],
+        "message": "Still very new! Efficiency should be close to rated output — great foundation to build on. ✅"
+      },
+      {
+        "keywords": [
+          "2 – 5",
+          "2-5"
+        ],
+        "message": "In good shape! Typical degradation at this age is only about 1–2% — mostly negligible. 👍"
+      },
+      {
+        "keywords": [
+          "5 – 10",
+          "5-10"
+        ],
+        "message": "Moderate age — you may have experienced around 3–5% degradation by now. Definitely worth assessing performance. 🔍"
+      },
+      {
+        "keywords": [
+          "more than 10",
+          "10+"
+        ],
+        "message": "Older panels lose efficiency over time — typically 0.5% per year. We'll factor in this degradation in our model. ⚠️"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_monthly_bill_in_currency"
+      }
+    ]
+  },
+  "q_monthly_bill_in_currency": {
+    "id": "q_monthly_bill_in_currency",
+    "questionText": "Roughly how much do you spend on electricity each month?",
+    "options": [],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "message": "Perfect, got it! Your bill amount is a key input for calculating system sizing and ROI."
+      }
+    ],
+    "next": [
+      {
+        "node": "q_daily_units_in_kwh"
+      }
+    ]
+  },
+  "q_daily_units_in_kwh": {
+    "id": "q_daily_units_in_kwh",
+    "questionText": "Do you know approximately how many units (kWh) of electricity your household or business consumes per day?(for more accuracy type in the chat)",
+    "options": [
+      "Less than 5 kWh/day",
+      "5 – 10 kWh/day",
+      "10 – 20 kWh/day",
+      "20 – 40 kWh/day",
+      "More than 40 kWh/day",
+      "I'm not sure"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "not sure",
+          "don't know",
+          "unsure"
+        ],
+        "message": "No worries! I'll estimate it from your monthly bill. That works just as well for our calculations. 🧮"
+      },
+      {
+        "keywords": [
+          "less than 5",
+          "5 kwh"
+        ],
+        "message": "Low consumption — a small 1–2 kW system may be all you need. Very manageable! 🌱"
+      },
+      {
+        "keywords": [
+          "5",
+          "10",
+          "10 kwh"
+        ],
+        "message": "Moderate consumption — a 2–4 kW system would likely cover most of your needs. 🔋"
+      },
+      {
+        "keywords": [
+          "10",
+          "20"
+        ],
+        "message": "Above average consumption — we'll be looking at a 4–8 kW system range for good coverage. ⚡"
+      },
+      {
+        "keywords": [
+          "20",
+          "40",
+          "more than 40"
+        ],
+        "message": "High consumption! A larger system or multi-phase setup will be needed. Exciting project ahead! 🏭"
+      },
+      {
+        "message": "Great data point! Daily kWh consumption is a critical factor in sizing your solar system correctly."
+      }
+    ],
+    "next": [
+      {
+        "node": "q_peak_hours"
+      }
+    ]
+  },
+  "q_peak_hours": {
+    "id": "q_peak_hours",
+    "questionText": "When does your electricity usage peak during the day? This helps determine the best system configuration.",
+    "options": [
+      "🌅 Morning (6am – 12pm)",
+      "☀️ Afternoon (12pm – 5pm)",
+      "🌆 Evening (5pm – 10pm)",
+      "🌙 Night (10pm – 6am)",
+      "Spread evenly throughout the day"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "morning"
+        ],
+        "message": "Morning peak aligns well with solar generation — great natural sync! We'll optimize for this. 🌅"
+      },
+      {
+        "keywords": [
+          "afternoon"
+        ],
+        "message": "Afternoon is peak solar production time — perfect alignment! Maximum efficiency during your peak demand. ☀️"
+      },
+      {
+        "keywords": [
+          "evening"
+        ],
+        "message": "Evening peak is after solar production ends — we'll likely recommend a battery storage system to bridge this gap. 🔋"
+      },
+      {
+        "keywords": [
+          "night"
+        ],
+        "message": "Nighttime usage means battery storage becomes essential. Let's explore the right storage capacity for you. 🌙"
+      },
+      {
+        "keywords": [
+          "evenly",
+          "spread",
+          "throughout"
+        ],
+        "message": "Steady consumption throughout the day is ideal — solar + small battery will cover you very effectively. ✅"
+      }
+    ],
+    "next": [
+      {
+        "keywords": [
+          "evening",
+          "night"
+        ],
+        "node": "q_battery_interest"
+      },
+      {
+        "node": "q_occupants"
+      }
+    ]
+  },
+  "q_battery_interest": {
+    "id": "q_battery_interest",
+    "questionText": "Since your peak usage is after solar hours, would you be interested in adding battery storage to store daytime solar energy for evening/night use?",
+    "options": [
+      "Yes, definitely interested in battery storage",
+      "Maybe, tell me more about the cost",
+      "No, I'll rely on grid at night",
+      "I already have a battery system"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "yes",
+          "definitely",
+          "interested"
+        ],
+        "message": "Excellent choice! Battery storage maximizes solar self-consumption and gives you true energy independence. 🔋"
+      },
+      {
+        "keywords": [
+          "maybe",
+          "cost",
+          "more"
+        ],
+        "message": "Totally fair! I'll include battery cost and ROI in the final report so you can make an informed call. 📊"
+      },
+      {
+        "keywords": [
+          "no",
+          "grid"
+        ],
+        "message": "That's perfectly fine! Grid-tied systems are simpler and still very cost-effective. ✅"
+      },
+      {
+        "keywords": [
+          "already",
+          "have"
+        ],
+        "message": "Fantastic! Having existing storage is a huge advantage. I'll factor your battery capacity into the model. ⚡"
+      }
+    ],
+    "next": [
+      {
+        "keywords": [
+          "already",
+          "have"
+        ],
+        "node": "q_battery_capacity"
+      },
+      {
+        "node": "q_occupants"
+      }
+    ]
+  },
+  "q_battery_capacity": {
+    "id": "q_battery_capacity",
+    "questionText": "What is the capacity of your existing battery storage system?",
+    "options": [
+      "Less than 5 kWh",
+      "5 – 10 kWh",
+      "10 – 20 kWh",
+      "More than 20 kWh",
+      "Not sure of the exact capacity"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "message": "Got it! I'll integrate your existing {answer} battery capacity into the energy flow analysis."
+      }
+    ],
+    "next": [
+      {
+        "node": "q_occupants"
+      }
+    ]
+  },
+  "q_occupants": {
+    "id": "q_occupants",
+    "questionText": "How many people live or work in the property? (This helps estimate daily energy consumption more accurately)",
+    "options": [
+      "1 – 2 people",
+      "3 – 4 people",
+      "5 – 6 people",
+      "7 or more people",
+      "It's a business (not residential)"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "1",
+          "2",
+          "1 – 2"
+        ],
+        "message": "Small household — energy needs are modest and a compact system will serve you very well. 🏠"
+      },
+      {
+        "keywords": [
+          "3",
+          "4",
+          "3 – 4"
+        ],
+        "message": "Average family size — this is the most common household profile. A standard 3–5 kW system is likely ideal. 👨‍👩‍👧‍👦"
+      },
+      {
+        "keywords": [
+          "5",
+          "6",
+          "5 – 6"
+        ],
+        "message": "Larger household with higher energy needs — we'll size accordingly to keep everyone powered. ⚡"
+      },
+      {
+        "keywords": [
+          "7",
+          "more"
+        ],
+        "message": "Big household! We'll definitely be looking at a larger system to meet demand. This also means bigger savings. 💰"
+      },
+      {
+        "keywords": [
+          "business"
+        ],
+        "message": "Business property — usage patterns differ from residential. I'll use the daily kWh data you provided instead. 🏢"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_major_appliances"
+      }
+    ]
+  },
+  "q_major_appliances": {
+    "id": "q_major_appliances",
+    "questionText": "Which of these high-consumption appliances do you use regularly? (Select all that apply or describe your own)",
+    "options": [
+      "❄️ Air conditioner (AC)",
+      "🌊 Water heater / Geyser",
+      "🚗 Electric vehicle (EV) charger",
+      "🌀 Water pump / Borewell pump",
+      "🏊 Swimming pool pump",
+      "🖥️ High-powered computers / Servers"
+    ],
+    "allowFreeText": true,
+    "isMultiSelect": true,
+    "reactions": [
+      {
+        "keywords": [
+          "ac",
+          "air conditioner",
+          "air con"
+        ],
+        "message": "AC units are among the biggest energy consumers — solar + AC is one of the most impactful combinations! ❄️"
+      },
+      {
+        "keywords": [
+          "ev",
+          "electric vehicle",
+          "car charger"
+        ],
+        "message": "EV charging at home via solar is incredibly cost-effective — essentially free fuel from the sun! 🚗⚡"
+      },
+      {
+        "keywords": [
+          "water pump",
+          "borewell"
+        ],
+        "message": "Pumps can run for hours daily — solar is perfect for daytime pump usage and eliminates running costs. 🌊"
+      },
+      {
+        "keywords": [
+          "swimming pool",
+          "pool"
+        ],
+        "message": "Pool pumps are energy-hungry! Solar is an ideal match for pool homes — significant ongoing savings. 🏊"
+      },
+      {
+        "message": "Got it! High-consumption appliances significantly impact system sizing. I've noted {answer} for the calculations."
+      }
+    ],
+    "next": [
+      {
+        "node": "q_roof"
+      }
+    ]
+  },
+  "q_roof": {
+    "id": "q_roof",
+    "questionText": "How would you describe your available roof space? (The amount of usable, unobstructed roof area determines how many panels can be installed)",
+    "options": [
+      "🏘️ Small — Row house or apartment terrace (< 300 sq ft)",
+      "🏠 Medium — Standard independent house (300 – 800 sq ft)",
+      "🏡 Large — Bungalow or duplex (800 – 2,000 sq ft)",
+      "🏢 Very Large — Commercial building or farm (> 2,000 sq ft)",
+      "🤷 Not sure of the exact size"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "small",
+          "row house",
+          "apartment",
+          "300"
+        ],
+        "message": "Small spaces work too! High-efficiency monocrystalline panels can maximize output even in tight spots. 🏘️"
+      },
+      {
+        "keywords": [
+          "medium",
+          "standard",
+          "independent"
+        ],
+        "message": "A medium roof can comfortably accommodate a 3–6 kW system — very practical! 🏠"
+      },
+      {
+        "keywords": [
+          "large",
+          "bungalow",
+          "duplex"
+        ],
+        "message": "Great space! A large roof gives us excellent flexibility to size the system for maximum savings. 🏡"
+      },
+      {
+        "keywords": [
+          "very large",
+          "commercial",
+          "farm"
+        ],
+        "message": "Excellent! With that much roof space, we can design a high-capacity system — potentially generating surplus power. 🏢⚡"
+      },
+      {
+        "keywords": [
+          "not sure"
+        ],
+        "message": "That's fine! I'll work with estimates based on your property type. We can always refine with actual measurements later. 📐"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_roof_type"
+      }
+    ]
+  },
+  "q_roof_type": {
+    "id": "q_roof_type",
+    "questionText": "What type of roof do you have? This affects the type of mounting system needed and installation complexity.",
+    "options": [
+      "🔺 Sloped/Pitched — Tiles, RCC slope, or metal sheets",
+      "⬜ Flat — Concrete terrace or flat industrial roof",
+      "🔩 Metal sheet — Corrugated iron or steel roofing",
+      "🏚️ Asbestos / Old material roofing",
+      "🤷 Not sure"
+    ],
+    "allowFreeText": false,
+    "reactions": [
+      {
+        "keywords": [
+          "sloped",
+          "pitched",
+          "tile"
+        ],
+        "message": "Sloped roofs are actually great for solar! The angle often provides a natural tilt toward the sun. 🔺"
+      },
+      {
+        "keywords": [
+          "flat",
+          "concrete",
+          "terrace"
+        ],
+        "message": "Flat roofs are very popular for solar in India — we use elevated mounting structures to achieve the optimal tilt angle. ⬜"
+      },
+      {
+        "keywords": [
+          "metal",
+          "corrugated",
+          "steel"
+        ],
+        "message": "Metal roofs are very solar-friendly — special clamps make installation fast and non-invasive. 🔩"
+      },
+      {
+        "keywords": [
+          "asbestos",
+          "old"
+        ],
+        "message": "Noted — asbestos roofing needs special care during installation and may need strengthening first. ⚠️"
+      },
+      {
+        "keywords": [
+          "not sure"
+        ],
+        "message": "No worries! A site visit would clarify this — I'll proceed with standard assumptions for now. ✅"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_roof_orientation"
+      }
+    ]
+  },
+  "q_roof_orientation": {
+    "id": "q_roof_orientation",
+    "questionText": "Which direction does your roof (or the main solar-installation surface) face? This is critical — south-facing surfaces capture the most solar energy in the Northern Hemisphere.",
+    "options": [
+      "⬆️ South (Best for India, Europe, USA)",
+      "⬇️ North (Best for Australia, Southern Hemisphere)",
+      "➡️ East",
+      "⬅️ West",
+      "↗️ South-East",
+      "↖️ South-West",
+      "🤷 Mixed or not sure"
+    ],
+    "allowFreeText": false,
+    "reactions": [
+      {
+        "keywords": [
+          "south"
+        ],
+        "message": "South-facing is optimal! You'll capture maximum solar energy throughout the day. Perfect orientation! 🌞"
+      },
+      {
+        "keywords": [
+          "north"
+        ],
+        "message": "For locations in India, North-facing gets less sun. We'll compensate with panel tilt angle optimization. 🔍"
+      },
+      {
+        "keywords": [
+          "east"
+        ],
+        "message": "East-facing panels excel in morning production — great if your peak usage is in the morning hours. 🌅"
+      },
+      {
+        "keywords": [
+          "west"
+        ],
+        "message": "West-facing panels capture peak afternoon sun — great if you have evening loads. 🌇"
+      },
+      {
+        "keywords": [
+          "south-east"
+        ],
+        "message": "South-East is an excellent orientation — nearly as good as true South with added morning generation. ✅"
+      },
+      {
+        "keywords": [
+          "south-west"
+        ],
+        "message": "South-West is great — strong afternoon generation that aligns well with most households' peak demand. ✅"
+      },
+      {
+        "keywords": [
+          "mixed",
+          "not sure"
+        ],
+        "message": "Mixed orientation is common in large rooftops! We'll optimize panel placement across the available surfaces. 📐"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_roof_tilt"
+      }
+    ]
+  },
+  "q_roof_tilt": {
+    "id": "q_roof_tilt",
+    "questionText": "What is the approximate tilt angle of your roof or planned panel mounting? (For flat roofs, we typically install at 10–25° for self-cleaning and optimal angle)",
+    "options": [
+      "🏔️ Steep (35° – 60°)",
+      "📐 Moderate (15° – 35°) — Most common for tilted roofs",
+      "🏳️ Low pitch (5° – 15°)",
+      "⬜ Flat (0° – 5°) — Flat concrete roof",
+      "🤷 Not sure / I have a flat roof and will use mounting frames"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "steep",
+          "35",
+          "60"
+        ],
+        "message": "Steep pitch works well in high-latitude locations. I'll apply the correct irradiance correction factor. 🏔️"
+      },
+      {
+        "keywords": [
+          "moderate",
+          "15",
+          "35"
+        ],
+        "message": "That's close to the optimal tilt for most Indian cities (typically 10–25°). Great natural angle! 📐"
+      },
+      {
+        "keywords": [
+          "low",
+          "5",
+          "15"
+        ],
+        "message": "Low pitch is fine — panels will still perform well, and we'll account for the slightly reduced angle efficiency. 🏳️"
+      },
+      {
+        "keywords": [
+          "flat",
+          "0",
+          "5"
+        ],
+        "message": "Flat roof! We'll design with elevated mounting structures to achieve the optimal tilt for your location. ⬜🔧"
+      },
+      {
+        "keywords": [
+          "not sure",
+          "mounting",
+          "frames"
+        ],
+        "message": "No worries — we'll design the best mounting angle for your latitude. I'll use the technically optimal tilt in calculations. ✅"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_shading"
+      }
+    ]
+  },
+  "q_shading": {
+    "id": "q_shading",
+    "questionText": "Is your roof or installation area shaded by trees, buildings, chimneys, or water tanks at any point during the day?",
+    "options": [
+      "☀️ No shade — Clear, open sky view all day",
+      "🌤️ Morning shade only (6am – 10am)",
+      "🌆 Evening shade only (3pm – 6pm)",
+      "⛅ Partial shade during peak hours (10am – 3pm)",
+      "🌳 Heavy shade — Significant obstructions most of the day"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "no shade",
+          "clear",
+          "open"
+        ],
+        "message": "Ideal conditions! Unobstructed sunlight all day means maximum power generation. 🌟"
+      },
+      {
+        "keywords": [
+          "morning shade"
+        ],
+        "message": "Morning shade is manageable — peak solar hours (10am–3pm) being clear is what matters most. ✅"
+      },
+      {
+        "keywords": [
+          "evening shade"
+        ],
+        "message": "Evening shade is actually quite common and has minimal impact on overall energy production. ✅"
+      },
+      {
+        "keywords": [
+          "partial",
+          "peak hours"
+        ],
+        "message": "Shading during peak hours can significantly impact output. We may recommend microinverters or power optimizers to mitigate this. ⚠️"
+      },
+      {
+        "keywords": [
+          "heavy shade",
+          "heavy"
+        ],
+        "message": "Heavy shading will significantly reduce output — this is a key constraint I'll definitely factor in! We'll explore MLPE (Module Level Power Electronics) as a solution. ⚠️🔧"
+      }
+    ],
+    "next": [
+      {
+        "keywords": [
+          "partial",
+          "heavy"
+        ],
+        "node": "q_shading_source"
+      },
+      {
+        "node": "q_weather"
+      }
+    ]
+  },
+  "q_shading_source": {
+    "id": "q_shading_source",
+    "questionText": "What is causing the shading on your roof? Understanding the source helps determine if it can be resolved.",
+    "options": [
+      "🌳 Large trees",
+      "🏢 Nearby tall buildings",
+      "🏗️ Chimneys, water tanks, or AC units on roof",
+      "📡 Antennas or other rooftop equipment",
+      "Multiple sources combined"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "tree",
+          "trees"
+        ],
+        "message": "Trees can sometimes be trimmed for better solar access. If not, panel-level optimizers can minimize the impact. 🌳"
+      },
+      {
+        "keywords": [
+          "building",
+          "buildings"
+        ],
+        "message": "Building shadows are permanent but predictable — I'll use solar path analysis to determine the actual impact. 🏢"
+      },
+      {
+        "keywords": [
+          "chimney",
+          "water tank",
+          "ac"
+        ],
+        "message": "Rooftop obstructions can often be worked around by smart panel placement. 🏗️"
+      },
+      {
+        "keywords": [
+          "antenna",
+          "equipment"
+        ],
+        "message": "Small obstructions can be managed with proper panel layout to keep them out of shade paths. 📡"
+      },
+      {
+        "keywords": [
+          "multiple"
+        ],
+        "message": "Multiple shading sources means careful site analysis is important. I'll apply appropriate derating in the model. 🔍"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_weather"
+      }
+    ]
+  },
+  "q_weather": {
+    "id": "q_weather",
+    "questionText": "How would you describe the general weather and climate in your area throughout the year?",
+    "options": [
+      "☀️ Mostly Sunny (Tropical / Desert — Sunny 250+ days/year)",
+      "⛅ Mixed (Temperate — Sunny summers, cloudy winters)",
+      "🌧️ Rainy / Cloudy (Coastal / Monsoon — Heavy annual rainfall)",
+      "❄️ Cold and Snowy (Temperate — Cold winters with snowfall)",
+      "🌫️ Frequently Hazy / Polluted (Urban industrial areas)"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "sunny",
+          "tropical",
+          "desert"
+        ],
+        "message": "Excellent! High solar irradiance all year — your location is a solar goldmine. Maximum output expected! ☀️🌟"
+      },
+      {
+        "keywords": [
+          "mixed",
+          "temperate"
+        ],
+        "message": "Mixed climate is very manageable — modern panels still generate well on cloudy days through diffuse irradiance. ⛅"
+      },
+      {
+        "keywords": [
+          "rainy",
+          "cloudy",
+          "monsoon",
+          "coastal"
+        ],
+        "message": "Interesting! Cloud cover will reduce output during rainy months, but panels still work. Let me understand the seasonal pattern better... 🌧️"
+      },
+      {
+        "keywords": [
+          "cold",
+          "snowy"
+        ],
+        "message": "Cold climates are interesting — low temperatures actually improve panel efficiency! Snow can be a challenge but panels are often angled to shed it. ❄️"
+      },
+      {
+        "keywords": [
+          "hazy",
+          "polluted",
+          "smog",
+          "industrial"
+        ],
+        "message": "Air pollution and haze reduce solar irradiance. I'll apply an appropriate soiling derating factor in the model. 🌫️🔧"
+      }
+    ],
+    "next": [
+      {
+        "keywords": [
+          "rainy",
+          "cloudy",
+          "monsoon",
+          "coastal"
+        ],
+        "node": "q_rain_months"
+      },
+      {
+        "keywords": [
+          "cold",
+          "snowy"
+        ],
+        "node": "q_snow_months"
+      },
+      {
+        "keywords": [
+          "hazy",
+          "polluted"
+        ],
+        "node": "q_dust_cleaning"
+      },
+      {
+        "node": "q_panel_type"
+      }
+    ]
+  },
+  "q_rain_months": {
+    "id": "q_rain_months",
+    "questionText": "Since you mentioned rainy or cloudy weather, roughly how many months per year does your region experience heavy cloud cover or monsoon conditions?",
+    "options": [],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "message": "Understood! I'll model {answer} of reduced irradiance at roughly 40–60% of clear-sky levels in the annual energy calculation. ☁️📊"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_dust_cleaning"
+      }
+    ]
+  },
+  "q_snow_months": {
+    "id": "q_snow_months",
+    "questionText": "How many months per year does your area experience snowfall that might cover the panels?",
+    "options": [
+      "1 – 2 months",
+      "3 – 4 months",
+      "5 or more months",
+      "Rarely snows but gets very cold"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "1",
+          "2"
+        ],
+        "message": "Short snow season — the impact on annual generation will be manageable. Panels shed snow quickly if tilted. ❄️"
+      },
+      {
+        "keywords": [
+          "3",
+          "4"
+        ],
+        "message": "Moderate snow period — I'll factor this into the seasonal yield model. Heating cables on panels may be worth considering. 🌨️"
+      },
+      {
+        "keywords": [
+          "5",
+          "more"
+        ],
+        "message": "Long snow season — significant seasonal impact. However, cold temperatures will boost efficiency in the remaining months! ❄️⬆️"
+      },
+      {
+        "keywords": [
+          "rarely",
+          "cold"
+        ],
+        "message": "Cold without snow is actually ideal! Low temperatures increase panel efficiency by up to 10–15%. 🌡️✅"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_dust_cleaning"
+      }
+    ]
+  },
+  "q_dust_cleaning": {
+    "id": "q_dust_cleaning",
+    "questionText": "How often do you plan to clean the solar panels? Dust and soiling can reduce output by 5–30% if panels are not maintained.",
+    "options": [
+      "🧹 Weekly cleaning",
+      "📅 Monthly cleaning",
+      "📆 Quarterly (every 3 months)",
+      "🤷 Rarely — I'll clean when I remember",
+      "🤖 Planning to install an auto-cleaning system"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "weekly"
+        ],
+        "message": "Excellent maintenance habit! Weekly cleaning ensures minimal soiling losses — maximum output year-round. 🏆"
+      },
+      {
+        "keywords": [
+          "monthly"
+        ],
+        "message": "Monthly cleaning is the industry standard — you'll keep soiling losses under 3–5%. Great practice! 👍"
+      },
+      {
+        "keywords": [
+          "quarterly",
+          "3 months"
+        ],
+        "message": "Quarterly is acceptable — I'll apply a ~10% soiling derating factor for those between-cleaning periods. 📊"
+      },
+      {
+        "keywords": [
+          "rarely",
+          "remember"
+        ],
+        "message": "Honest answer! I'll apply a higher soiling loss factor (~15–20%) to keep the prediction realistic. 🔍"
+      },
+      {
+        "keywords": [
+          "auto",
+          "automatic"
+        ],
+        "message": "Auto-cleaning systems are fantastic — virtually zero soiling losses. Great investment for large installations! 🤖✅"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_panel_type"
+      }
+    ]
+  },
+  "q_panel_type": {
+    "id": "q_panel_type",
+    "questionText": "What type of solar panels are you planning to use (or do you already have)? Panel type directly affects efficiency and performance.",
+    "options": [
+      "⚡ Monocrystalline — Highest efficiency (20–23%), premium cost",
+      "🔷 Polycrystalline — Good efficiency (15–17%), mid-range cost",
+      "🌑 Thin-Film (CIGS/CdTe) — Lower efficiency (10–13%), flexible",
+      "🔬 Bifacial — Captures light from both sides, cutting-edge",
+      "🤷 Not decided yet / Recommend one for me"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "mono",
+          "monocrystalline"
+        ],
+        "message": "Premium choice! Monocrystalline panels offer the highest efficiency — especially valuable if roof space is limited. ⚡"
+      },
+      {
+        "keywords": [
+          "poly",
+          "polycrystalline"
+        ],
+        "message": "Great value for money! Polycrystalline is the most popular choice globally — reliable and cost-effective. 🔷"
+      },
+      {
+        "keywords": [
+          "thin",
+          "film",
+          "cigs"
+        ],
+        "message": "Thin-film works really well in high-temperature or low-light conditions and performs well in diffuse light. 🌑"
+      },
+      {
+        "keywords": [
+          "bifacial"
+        ],
+        "message": "Cutting-edge technology! Bifacial panels can generate 10–30% more energy by capturing reflected light from the ground. 🔬🚀"
+      },
+      {
+        "keywords": [
+          "not decided",
+          "recommend"
+        ],
+        "message": "I'll recommend the best type based on your roof size, budget, and location in the final report. Let's keep going! 🤖"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_panel_wattage"
+      }
+    ]
+  },
+  "q_panel_wattage": {
+    "id": "q_panel_wattage",
+    "questionText": "What wattage are the individual panels you're planning to use? (Or what's your target system size in kW?)",
+    "options": [
+      "300W – 350W per panel (Standard)",
+      "350W – 400W per panel (Efficient)",
+      "400W – 450W per panel (High efficiency)",
+      "450W – 550W per panel (Premium / Bifacial)",
+      "I want to specify total system size in kW instead",
+      "Not sure — recommend the best option"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "300",
+          "350",
+          "standard"
+        ],
+        "message": "Standard panels are a solid, cost-effective choice. Widely available and well-proven in the field. 👍"
+      },
+      {
+        "keywords": [
+          "350",
+          "400",
+          "efficient"
+        ],
+        "message": "Good choice! 350–400W panels offer an excellent balance of efficiency and cost. Very popular right now. ✅"
+      },
+      {
+        "keywords": [
+          "400",
+          "450",
+          "high"
+        ],
+        "message": "High-efficiency panels! Perfect if your roof space is limited — more power per square meter. ⚡"
+      },
+      {
+        "keywords": [
+          "450",
+          "550",
+          "premium",
+          "bifacial"
+        ],
+        "message": "Top-tier panels! These maximize output and are ideal for premium installations where performance is paramount. 🏆"
+      },
+      {
+        "keywords": [
+          "kw",
+          "system size"
+        ],
+        "message": "No problem! I'll work with total system kW in the calculations. Please type your desired system size below. 📊"
+      },
+      {
+        "keywords": [
+          "not sure",
+          "recommend"
+        ],
+        "message": "I'll calculate the optimal system size based on your consumption and roof area and include it in the final report. 🤖"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_inverter_type"
+      }
+    ]
+  },
+  "q_inverter_type": {
+    "id": "q_inverter_type",
+    "questionText": "What type of inverter are you planning to use? The inverter converts DC solar power to usable AC electricity — it's as important as the panels.",
+    "options": [
+      "🔁 String Inverter — Most common, cost-effective, centralised",
+      "🔌 Microinverter — Per-panel conversion, great for shaded roofs",
+      "⚡ Hybrid Inverter — Works with both solar and battery storage",
+      "🔋 Off-grid Inverter — For completely off-grid setups",
+      "🤷 Not sure — recommend one based on my setup"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "string"
+        ],
+        "message": "String inverters are cost-effective and reliable — ideal for roofs with minimal shading. Good choice! 🔁"
+      },
+      {
+        "keywords": [
+          "micro",
+          "microinverter"
+        ],
+        "message": "Microinverters are excellent for partial shading — each panel performs independently. Best performance in non-ideal conditions. 🔌🌟"
+      },
+      {
+        "keywords": [
+          "hybrid"
+        ],
+        "message": "Hybrid inverters are the future — they manage solar, battery, and grid all in one. Perfect if you're adding storage. ⚡🔋"
+      },
+      {
+        "keywords": [
+          "off-grid",
+          "off grid"
+        ],
+        "message": "Off-grid setup! True energy independence. We'll carefully size the battery bank to ensure uninterrupted power. 🔋🏕️"
+      },
+      {
+        "keywords": [
+          "not sure",
+          "recommend"
+        ],
+        "message": "I'll recommend the best inverter type based on your shading situation, battery preference, and budget. 🤖"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_grid_connection"
+      }
+    ]
+  },
+  "q_grid_connection": {
+    "id": "q_grid_connection",
+    "questionText": "What is your grid connection arrangement?",
+    "options": [
+      "🔌 On-grid (Grid-tied) — Connected to the utility grid",
+      "🔋 Off-grid — Completely independent from the grid",
+      "⚡ Hybrid — Grid-connected but with battery backup",
+      "🔄 Net Metering — Sell excess power back to the grid",
+      "🤷 Not sure what these mean"
+    ],
+    "allowFreeText": false,
+    "reactions": [
+      {
+        "keywords": [
+          "on-grid",
+          "grid-tied",
+          "connected"
+        ],
+        "message": "On-grid is the most common setup — simpler, lower cost, and you draw from the grid at night. ✅"
+      },
+      {
+        "keywords": [
+          "off-grid",
+          "independent"
+        ],
+        "message": "Off-grid means complete independence! This requires more battery capacity for nighttime and cloudy day backup. 🔋"
+      },
+      {
+        "keywords": [
+          "hybrid"
+        ],
+        "message": "Best of both worlds! Hybrid setups give you battery backup for outages while staying grid-connected. ⚡🔋"
+      },
+      {
+        "keywords": [
+          "net metering",
+          "sell",
+          "export"
+        ],
+        "message": "Net metering is fantastic — you'll earn credits for excess power sent to the grid, further improving your ROI. 💰"
+      },
+      {
+        "keywords": [
+          "not sure"
+        ],
+        "message": "No worries! I'll explain the options and recommend the best connection type in the final report. 📖"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_budget_in_currency"
+      }
+    ]
+  },
+  "q_budget_in_currency": {
+    "id": "q_budget_in_currency",
+    "questionText": "What is your approximate budget for the solar installation? This helps tailor the system recommendation to what's financially feasible for you.",
+    "options": [
+      "💰 Up to ₹1 Lakh / $2,500",
+      "💰 ₹1L – ₹2L / $2,500 – $5,000",
+      "💰 ₹2L – ₹5L / $5,000 – $12,000",
+      "💰 ₹5L – ₹10L / $12,000 – $25,000",
+      "💰 More than ₹10L / $25,000+",
+      "🤷 Not fixed — show me best value options"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "1 lakh",
+          "2500",
+          "up to"
+        ],
+        "message": "On a tighter budget — I'll recommend a compact but high-impact starter system that maximizes ROI within your range. 💡"
+      },
+      {
+        "keywords": [
+          "1l",
+          "2l",
+          "2500",
+          "5000"
+        ],
+        "message": "A practical budget for a solid residential system — we can design a 2–3 kW system in this range. 🏠"
+      },
+      {
+        "keywords": [
+          "2l",
+          "5l",
+          "5000",
+          "12000"
+        ],
+        "message": "Good investment range! A 4–8 kW system is achievable here — covering most or all of a typical household's needs. ⚡"
+      },
+      {
+        "keywords": [
+          "5l",
+          "10l",
+          "12000",
+          "25000"
+        ],
+        "message": "Excellent budget! We can design a comprehensive system with battery storage and premium components. 🌟"
+      },
+      {
+        "keywords": [
+          "10l",
+          "25000",
+          "more than"
+        ],
+        "message": "Premium budget — the world is your oyster! Full off-grid systems, bifacial panels, and top-tier storage all become options. 🚀"
+      },
+      {
+        "keywords": [
+          "not fixed",
+          "best value",
+          "show"
+        ],
+        "message": "Smart approach! I'll present the best value option and a premium option with full financial breakdowns for both. 📊"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_financing"
+      }
+    ]
+  },
+  "q_financing": {
+    "id": "q_financing",
+    "questionText": "How are you planning to finance the solar installation?",
+    "options": [
+      "💵 Full upfront cash payment",
+      "🏦 Bank loan / EMI (monthly payments)",
+      "🏛️ Government subsidy scheme",
+      "☀️ Solar lease / PPA (Pay as you generate)",
+      "🔄 Combination of subsidy + personal funds"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "cash",
+          "upfront"
+        ],
+        "message": "Full upfront payment gives you the fastest ROI and simplest ownership. Best long-term financial outcome! 💵"
+      },
+      {
+        "keywords": [
+          "loan",
+          "emi"
+        ],
+        "message": "Loans make solar accessible without a large upfront cost — and your EMI is often less than your current electricity bill! 🏦"
+      },
+      {
+        "keywords": [
+          "government",
+          "subsidy",
+          "scheme"
+        ],
+        "message": "Smart move! In India, PM Surya Ghar Yojana offers subsidies of ₹30,000 to ₹78,000 depending on system size. I'll factor this in. 🏛️"
+      },
+      {
+        "keywords": [
+          "lease",
+          "ppa"
+        ],
+        "message": "Solar lease/PPA means $0 upfront cost — you pay for the power at a locked-in rate lower than the utility. Good for cash-flow! ☀️"
+      },
+      {
+        "keywords": [
+          "combination",
+          "subsidy"
+        ],
+        "message": "The hybrid approach is very popular — government subsidy covers part of the cost and you top up the rest. Wise planning! 🔄"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_subsidy_awareness"
+      }
+    ]
+  },
+  "q_subsidy_awareness": {
+    "id": "q_subsidy_awareness",
+    "questionText": "Are you aware of government solar subsidies or net metering policies available in your region?",
+    "options": [
+      "✅ Yes, I'm aware and want to apply",
+      "🔍 I've heard about them but need more details",
+      "❌ No, tell me what's available",
+      "🌍 I'm outside India — different policies apply"
+    ],
+    "allowFreeText": false,
+    "reactions": [
+      {
+        "keywords": [
+          "yes",
+          "aware",
+          "apply"
+        ],
+        "message": "Great! I'll make sure the final report includes subsidy deduction in the ROI calculation. 🏛️✅"
+      },
+      {
+        "keywords": [
+          "heard",
+          "details"
+        ],
+        "message": "I'll include a full subsidy breakdown for your region in the final prediction report. 📋"
+      },
+      {
+        "keywords": [
+          "no",
+          "tell"
+        ],
+        "message": "Absolutely! I'll include available schemes (PM Surya Ghar Yojana, MNRE subsidies, State-level schemes) in the report. 📖"
+      },
+      {
+        "keywords": [
+          "outside india",
+          "different"
+        ],
+        "message": "Understood! I'll include relevant international incentives (ITC in USA, ECO4 in UK, STCs in Australia) based on your location. 🌍"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_expectations"
+      }
+    ]
+  },
+  "q_expectations": {
+    "id": "q_expectations",
+    "questionText": "What output would be most useful for you from this prediction? What matters most to you right now?",
+    "options": [
+      "📊 Monthly and annual energy generation (kWh)",
+      "💰 Cost savings and payback period (years)",
+      "🌍 Carbon footprint reduction (CO2 saved)",
+      "🔋 Battery sizing and storage recommendations",
+      "📋 Full detailed report with all of the above"
+    ],
+    "allowFreeText": true,
+    "isMultiSelect": true,
+    "reactions": [
+      {
+        "keywords": [
+          "kwh",
+          "energy",
+          "generation"
+        ],
+        "message": "I'll make the energy generation analysis front and center in the prediction output. ⚡"
+      },
+      {
+        "keywords": [
+          "cost",
+          "savings",
+          "payback"
+        ],
+        "message": "Financial ROI will be the headline of your prediction — with month-by-month savings breakdown. 💰"
+      },
+      {
+        "keywords": [
+          "carbon",
+          "co2",
+          "footprint"
+        ],
+        "message": "Great focus! I'll calculate your exact CO2 offset — a powerful number to share! 🌍"
+      },
+      {
+        "keywords": [
+          "battery",
+          "storage"
+        ],
+        "message": "Battery sizing will be a dedicated section in your report with cost-benefit analysis. 🔋"
+      },
+      {
+        "keywords": [
+          "full",
+          "detailed",
+          "all"
+        ],
+        "message": "Perfect — you'll get the complete solar intelligence report covering every dimension. 📋🌟"
+      },
+      {
+        "message": "Noted! I'll make sure {answer} is prominently featured in your solar prediction results."
+      }
+    ],
+    "next": [
+      {
+        "node": "q_timeline"
+      }
+    ]
+  },
+  "q_timeline": {
+    "id": "q_timeline",
+    "questionText": "When are you planning to install the solar system? This helps determine applicable subsidies and seasonal factors.",
+    "options": [
+      "🚀 Immediately — Within the next 1 month",
+      "📅 Soon — Within 3 months",
+      "🗓️ This year — Within 6–12 months",
+      "🔮 Planning ahead — 1–2 years from now",
+      "💭 Just exploring — No fixed timeline yet"
+    ],
+    "allowFreeText": false,
+    "reactions": [
+      {
+        "keywords": [
+          "immediately",
+          "1 month"
+        ],
+        "message": "Excellent! Acting now means you'll start saving sooner. I'll factor current incentive rates into the report. 🚀"
+      },
+      {
+        "keywords": [
+          "soon",
+          "3 months"
+        ],
+        "message": "Good timeframe — plenty of time to get quotes and approvals. Current subsidies should still be applicable. 📅"
+      },
+      {
+        "keywords": [
+          "this year",
+          "6",
+          "12"
+        ],
+        "message": "Solid planning horizon — I'll note that subsidy rates may change, so staying updated is advisable. 🗓️"
+      },
+      {
+        "keywords": [
+          "planning ahead",
+          "1",
+          "2 years"
+        ],
+        "message": "Long-term planning is smart! Panel prices tend to decrease over time, but so do subsidies sometimes. 🔮"
+      },
+      {
+        "keywords": [
+          "exploring",
+          "no fixed"
+        ],
+        "message": "No rush — this prediction will serve as your comprehensive reference whenever you're ready to proceed. 💭"
+      }
+    ],
+    "next": [
+      {
+        "node": "q_additional_notes"
+      }
+    ]
+  },
+  "q_additional_notes": {
+    "id": "q_additional_notes",
+    "questionText": "Almost done! Is there anything specific about your property, energy situation, or requirements that you'd like me to factor into the prediction? Any extra details help improve accuracy.",
+    "options": [
+      "No, I think you've covered everything",
+      "Yes, I have a power backup (generator/inverter)",
+      "Yes, I plan to add an EV soon",
+      "Yes, I'm expanding my home/business",
+      "I'll type a custom note below"
+    ],
+    "allowFreeText": true,
+    "reactions": [
+      {
+        "keywords": [
+          "no",
+          "covered",
+          "everything"
+        ],
+        "message": "Perfect! I have everything I need. Running your complete solar analysis now... 🔄"
+      },
+      {
+        "keywords": [
+          "generator",
+          "inverter",
+          "backup"
+        ],
+        "message": "Existing backup noted! We'll design the solar system to complement it seamlessly. 🔌"
+      },
+      {
+        "keywords": [
+          "ev",
+          "electric vehicle"
+        ],
+        "message": "Future EV noted! I'll size the system to handle EV charging load as well — smart forward planning! 🚗⚡"
+      },
+      {
+        "keywords": [
+          "expanding",
+          "expanding"
+        ],
+        "message": "Expansion plans noted! I'll add 20–30% headroom to the recommendation to accommodate future growth. 📈"
+      },
+      {
+        "message": "Excellent additional context! I'll incorporate this: '{answer}' into the analysis. 📝"
+      }
+    ],
+    "next": [
+      {
+        "node": null,
+        "action": "COMPILE_AND_GENERATE",
+        "message": "🎉 Thank you! I now have everything I need to generate your personalized solar prediction. Analysing your data with live weather, irradiance models, and financial calculators... This will take just a moment. ⚡🌞"
+      }
+    ]
+  }
+}

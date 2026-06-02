@@ -4,7 +4,7 @@ import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsToolti
 import { useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
-import questionsData from '../../public/corequestions.json';
+import questionsData from '../corequestions.json';
 import PredictionWizard from '../components/PredictionWizard';
 import { resetPredictionProgress, getStep1Data, getStep2Data } from '../services/predictionService';
 import '../styles/predictionWizard.css';

@@ -6,7 +6,7 @@ import {
   AlertTriangle, ArrowRight, Eye, RefreshCcw
 } from 'lucide-react';
 import PredictionStepper from './PredictionStepper';
-import questionsData from '../../public/corequestions.json';
+import questionsData from '../corequestions.json';
 import api from '../services/api';
 import { 
   getPredictionProgress,
