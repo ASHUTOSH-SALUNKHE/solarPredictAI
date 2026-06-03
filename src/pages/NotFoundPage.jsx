@@ -8,7 +8,7 @@ const NotFoundPage = () => {
     <main className="hero-section" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', flexDirection: 'column' }}>
       <Helmet>
         <title>Page Not Found | SolarPredict AI</title>
-        <meta name="description" content="The page you are looking for does not exist. Return to SolarPredict AI to forecast solar energy." />
+        <meta name="description" content="Page not found. Return to SolarPredict AI. Predict how many solar panels are required for your house, estimate installation and maintenance costs, get a detailed report, and forecast output with 99% accuracy." />
         <meta name="robots" content="noindex, follow" />
       </Helmet>
       

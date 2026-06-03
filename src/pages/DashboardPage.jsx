@@ -67,6 +67,8 @@ const DashboardPage = () => {
   // Weather Data States
   const [weatherCacheData, setWeatherCacheData] = useState(null);
   const [isLoadingWeather, setIsLoadingWeather] = useState(false);
+  const [selectedChartGroup, setSelectedChartGroup] = useState('solar');
+  const [selectedInspectorMonth, setSelectedInspectorMonth] = useState(1);
 
   useEffect(() => {
     if (activeTab === 'siting' && !sitingData && !isLoadingSiting) {
@@ -733,45 +735,136 @@ const DashboardPage = () => {
       );
     }
 
+    // Set up logical categories for questionnaire answers to group them cleanly
+    const categories = [
+      {
+        title: "Core Specifications & Intent",
+        icon: <Compass size={16} />,
+        keys: ["q_installation_type", "q_commercial_size_in_sqft", "q_goal"]
+      },
+      {
+        title: "Current Installation Baseline",
+        icon: <Settings size={16} />,
+        keys: ["q_existing_system", "q_existing_panel_capacity_kw", "q_existing_panel_age_in_years"]
+      },
+      {
+        title: "Consumption & Load Demands",
+        icon: <Zap size={16} />,
+        keys: ["q_monthly_bill_in_currency", "q_daily_units_in_kwh", "q_peak_hours", "q_battery_interest", "q_battery_capacity", "q_occupants", "q_major_appliances"]
+      },
+      {
+        title: "Structural Site Parameters",
+        icon: <Grid size={16} />,
+        keys: ["q_roof", "q_roof_type", "q_roof_material", "q_roof_obstructions", "q_shading", "q_wiring_age"]
+      }
+    ];
+
+    // Find any remaining keys that aren't explicitly categorized (excluding intro/welcome screens)
+    const coveredKeys = new Set();
+    categories.forEach(cat => cat.keys.forEach(k => coveredKeys.add(k)));
+    
+    const remainingKeys = Object.keys(sitingData.answers || {})
+      .filter(key => questionsData[key] && !questionsData[key].isIntro && !coveredKeys.has(key));
+      
+    if (remainingKeys.length > 0) {
+      categories.push({
+        title: "Additional Details",
+        icon: <FileText size={16} />,
+        keys: remainingKeys
+      });
+    }
+
     return (
-      <div className="siting-view-wrapper" style={{ maxWidth: '800px', margin: '0 auto' }}>
-        <div className="data-section-card" style={{ padding: '24px', marginBottom: '24px' }}>
-          <div className="card-header-simple" style={{ marginBottom: '16px' }}>
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <MapPin size={20} />
-              Installation Site Location
+      <div className="siting-grid">
+        {/* Left Column: Geographic and Coordinates Information */}
+        <div className="siting-geo-card">
+          <div className="card-header-simple" style={{ padding: '0 0 16px 0', borderBottom: '1px solid var(--db-border)', marginBottom: '16px' }}>
+            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+              <Compass size={18} style={{ color: 'var(--db-accent)' }} />
+              Geographic Parameters
             </h2>
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', color: 'var(--db-text-secondary)' }}>
-            <p><strong style={{ color: '#fff' }}>Address:</strong> {sitingData.location?.address || 'N/A'}</p>
-            <p><strong style={{ color: '#fff' }}>Coordinates:</strong> {sitingData.location?.lat}, {sitingData.location?.lon}</p>
+          
+          <div className="siting-map-preview">
+            <div className="radar-line"></div>
+            <MapPin size={32} style={{ color: 'var(--db-accent)', filter: 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.6))' }} />
+            <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--db-text-secondary)', fontWeight: 600 }}>GPS Telemetry Locked</span>
+            <span style={{ fontSize: '11px', fontFamily: 'monospace', color: 'var(--db-accent)' }}>
+              {sitingData.location?.lat?.toFixed(5) || 'N/A'}, {sitingData.location?.lon?.toFixed(5) || 'N/A'}
+            </span>
+          </div>
+
+          <div className="siting-geo-detail">
+            <div className="siting-detail-row">
+              <span className="siting-detail-label">Street Address</span>
+              <span className="siting-detail-value" style={{ fontFamily: 'inherit', color: 'var(--db-text-secondary)', textAlign: 'right', maxWidth: '60%' }}>
+                {sitingData.location?.address || 'N/A'}
+              </span>
+            </div>
+            <div className="siting-detail-row">
+              <span className="siting-detail-label">Latitude</span>
+              <span className="siting-detail-value">{sitingData.location?.lat || 'N/A'}</span>
+            </div>
+            <div className="siting-detail-row">
+              <span className="siting-detail-label">Longitude</span>
+              <span className="siting-detail-value">{sitingData.location?.lon || 'N/A'}</span>
+            </div>
+            <div className="siting-detail-row">
+              <span className="siting-detail-label">Region Code</span>
+              <span className="siting-detail-value highlight">
+                {sitingData.answers?.q_location || 'Subtropical'}
+              </span>
+            </div>
+            <div className="siting-detail-row">
+              <span className="siting-detail-label">Optimal Orientation</span>
+              <span className="siting-detail-value" style={{ color: 'var(--db-success)' }}>South-Facing (15°-25° tilt)</span>
+            </div>
+            <div className="siting-detail-row">
+              <span className="siting-detail-label">Peak Sun Hours</span>
+              <span className="siting-detail-value highlight">~5.4 hrs/day</span>
+            </div>
           </div>
         </div>
 
-        <div className="data-section-card" style={{ padding: '24px' }}>
-          <div className="card-header-simple" style={{ marginBottom: '16px' }}>
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <FileText size={20} />
-              Questionnaire Answers
-            </h2>
-          </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-            {sitingData.answers && Object.keys(sitingData.answers)
-              .filter(key => questionsData[key] && !questionsData[key].isIntro)
-              .map((key) => {
-                 const question = questionsData[key];
-                 return (
-                   <div key={key} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '16px' }}>
-                     <div style={{ fontSize: '0.85rem', color: 'var(--db-text-secondary)', fontWeight: '500', marginBottom: '8px' }}>
-                       {question.text}
-                     </div>
-                     <div style={{ color: '#fff', fontSize: '0.95rem', lineHeight: '1.5' }}>
-                       {sitingData.answers[key]}
-                     </div>
-                   </div>
-                 );
-              })}
-          </div>
+        {/* Right Column: Structured Questionnaire Cards */}
+        <div className="qa-card-container">
+          {categories.map((cat, catIdx) => {
+            const visibleKeys = cat.keys.filter(k => sitingData.answers && sitingData.answers[k] !== undefined);
+            if (visibleKeys.length === 0) return null;
+            
+            return (
+              <div key={catIdx} className="qa-group">
+                <div className="qa-category-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  {cat.icon}
+                  <span>{cat.title}</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '12px' }}>
+                  {visibleKeys.map((key) => {
+                    const question = questionsData[key];
+                    if (!question) return null;
+                    
+                    let answer = sitingData.answers[key];
+                    if (Array.isArray(answer)) {
+                      answer = answer.join(', ');
+                    }
+                    
+                    return (
+                      <div key={key} className="qa-item-card">
+                        <div className="qa-icon-wrapper">
+                          {cat.icon}
+                        </div>
+                        <div className="qa-content">
+                          <span className="qa-question-label">Parameter Input</span>
+                          <h3 className="qa-question-text">{question.questionText}</h3>
+                          <div className="qa-answer-text">{answer}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     );
@@ -806,77 +899,249 @@ const DashboardPage = () => {
       );
     }
 
-    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
-    
-    const chartData = weatherCacheData.monthlyData.map(m => ({
-      name: monthNames[m.month - 1] || `M${m.month}`,
-      Temperature: m.temperatureMean || 0,
-      DNI: m.dniMean || 0,
-      CloudCover: m.cloudcoverMean || 0,
-      Dust: m.dustMean || 0
-    }));
+    const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+    const monthAbbreviations = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+    // 1. Process Chart Data dynamically based on selected tab group
+    const chartData = weatherCacheData.monthlyData.map(m => {
+      const dataObj = {
+        name: monthAbbreviations[m.month - 1] || `M${m.month}`,
+      };
+      
+      // Inject variables based on selectedChartGroup
+      if (selectedChartGroup === 'solar') {
+        dataObj["GHI"] = m.ghiMean || 0;
+        dataObj["DNI"] = m.dniMean || 0;
+        dataObj["DHI"] = m.dhiMean || 0;
+      } else if (selectedChartGroup === 'temp') {
+        dataObj["Temperature"] = m.temperatureMean || 0;
+        dataObj["Dewpoint"] = m.dewpointMean || 0;
+        dataObj["Humidity"] = m.humidityMean || 0;
+      } else if (selectedChartGroup === 'wind') {
+        dataObj["WindSpeed"] = m.windSpeedMean || 0;
+        dataObj["Precipitation"] = m.precipitationMean || 0;
+        dataObj["Snowfall"] = m.snowfallMean || 0;
+      } else if (selectedChartGroup === 'atmosphere') {
+        dataObj["CloudCover"] = m.cloudcoverMean || 0;
+        dataObj["AQI"] = m.aqiMean || 0;
+        dataObj["Dust"] = m.dustMean || 0;
+      }
+      
+      return dataObj;
+    });
+
+    // Get current month inspector record
+    const inspectorRecord = weatherCacheData.monthlyData.find(m => m.month === selectedInspectorMonth) || weatherCacheData.monthlyData[0];
+
+    // Helper to render inspector groups
+    const renderInspectorGroup = (title, icon, items) => {
+      return (
+        <div className="weather-parameter-section">
+          <h4 className="weather-section-title">
+            {icon}
+            {title}
+          </h4>
+          <div className="weather-parameter-grid">
+            <div className="weather-param-header-row">
+              <span className="weather-param-header">Metric</span>
+              <span className="weather-param-header">Mean</span>
+              <span className="weather-param-header">Min</span>
+              <span className="weather-param-header">Max</span>
+              <span className="weather-param-header">Std Dev</span>
+            </div>
+            {items.map((item, idx) => (
+              <div key={idx} className="weather-parameter-row">
+                <span className="weather-param-name">{item.label}</span>
+                <span className="weather-param-val mean">{formatVal(inspectorRecord[item.meanKey], item.decimals || 1)}</span>
+                <span className="weather-param-val">{formatVal(inspectorRecord[item.minKey], item.decimals || 1)}</span>
+                <span className="weather-param-val">{formatVal(inspectorRecord[item.maxKey], item.decimals || 1)}</span>
+                <span className="weather-param-val">{formatVal(inspectorRecord[item.stdKey], item.decimals || 1)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      );
+    };
 
     return (
-      <div className="siting-view-wrapper" style={{ maxWidth: '900px', margin: '0 auto' }}>
+      <div className="tab-view-container" style={{ width: '100%' }}>
         
-        {/* Dynamic Composed Chart Section */}
-        <div className="data-section-card" style={{ padding: '24px', marginBottom: '24px' }}>
-          <div className="card-header-simple" style={{ marginBottom: '16px' }}>
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <TrendingUp size={20} />
-              Annual Climate & Irradiance Trends
-            </h2>
+        {/* Dynamic Meteorological Composed Chart Card */}
+        <div className="data-section-card" style={{ padding: '24px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
+            <div className="card-header-simple" style={{ padding: 0, borderBottom: 'none' }}>
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0 }}>
+                <TrendingUp size={20} />
+                Annual Climatology & Irradiance Trends
+              </h2>
+            </div>
+            {/* Chart Metric Tabs */}
+            <div className="weather-tab-group" style={{ borderBottom: 'none', margin: 0, padding: 0 }}>
+              <button 
+                className={`weather-tab-btn ${selectedChartGroup === 'solar' ? 'active' : ''}`}
+                onClick={() => setSelectedChartGroup('solar')}
+              >
+                Solar Radiation
+              </button>
+              <button 
+                className={`weather-tab-btn ${selectedChartGroup === 'temp' ? 'active' : ''}`}
+                onClick={() => setSelectedChartGroup('temp')}
+              >
+                Temperature & Humidity
+              </button>
+              <button 
+                className={`weather-tab-btn ${selectedChartGroup === 'wind' ? 'active' : ''}`}
+                onClick={() => setSelectedChartGroup('wind')}
+              >
+                Wind & Precipitation
+              </button>
+              <button 
+                className={`weather-tab-btn ${selectedChartGroup === 'atmosphere' ? 'active' : ''}`}
+                onClick={() => setSelectedChartGroup('atmosphere')}
+              >
+                Environment & Sky
+              </button>
+            </div>
           </div>
           
-          <div style={{ width: '100%', height: '350px', marginTop: '20px' }}>
+          <div style={{ width: '100%', height: '350px', marginTop: '10px' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={chartData} margin={{ top: 20, right: 30, left: 0, bottom: 0 }}>
-                <defs>
-                  <linearGradient id="colorTemp" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#f59e0b" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#f59e0b" stopOpacity={0}/>
-                  </linearGradient>
-                </defs>
+              <ComposedChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
-                <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="left" stroke="rgba(255,255,255,0.4)" fontSize={12} tickLine={false} axisLine={false} />
-                <YAxis yAxisId="right" orientation="right" stroke="rgba(255,255,255,0.4)" fontSize={12} tickLine={false} axisLine={false} />
+                <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="left" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} />
+                <YAxis yAxisId="right" orientation="right" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} />
                 <RechartsTooltip 
-                  contentStyle={{ backgroundColor: 'rgba(20,20,25,0.9)', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', color: '#fff' }}
+                  contentStyle={{ backgroundColor: 'rgba(10,10,10,0.95)', border: '1px solid var(--db-border)', borderRadius: '8px', color: '#fff' }}
                   itemStyle={{ color: '#fff' }}
                 />
-                <Legend wrapperStyle={{ paddingTop: '20px' }} />
-                <Bar yAxisId="right" dataKey="DNI" name="Direct Normal Irradiance (W/m²)" fill="#3b82f6" radius={[4, 4, 0, 0]} barSize={20} />
-                <Area yAxisId="left" type="monotone" dataKey="Temperature" name="Avg Temperature (°C)" stroke="#f59e0b" fillOpacity={1} fill="url(#colorTemp)" />
-                <Line yAxisId="left" type="monotone" dataKey="CloudCover" name="Cloud Cover (%)" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
+                <Legend wrapperStyle={{ paddingTop: '16px' }} />
+                
+                {selectedChartGroup === 'solar' && [
+                  <Area key="ghi" yAxisId="left" type="monotone" dataKey="GHI" name="Global Horiz Irradiance (GHI, W/m²)" stroke="#fbbf24" fill="rgba(251, 191, 36, 0.05)" strokeWidth={2} />,
+                  <Line key="dni" yAxisId="left" type="monotone" dataKey="DNI" name="Direct Normal Irradiance (DNI, W/m²)" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} />,
+                  <Line key="dhi" yAxisId="left" type="monotone" dataKey="DHI" name="Diffuse Horiz Irradiance (DHI, W/m²)" stroke="#38bdf8" strokeWidth={1.5} dot={{ r: 2 }} />
+                ]}
+                
+                {selectedChartGroup === 'temp' && [
+                  <Area key="temp" yAxisId="left" type="monotone" dataKey="Temperature" name="Avg Temperature (°C)" stroke="#ef4444" fill="rgba(239, 68, 68, 0.05)" strokeWidth={2} />,
+                  <Line key="dew" yAxisId="left" type="monotone" dataKey="Dewpoint" name="Avg Dewpoint (°C)" stroke="#6366f1" strokeWidth={1.5} dot={{ r: 3 }} />,
+                  <Line key="hum" yAxisId="right" type="monotone" dataKey="Humidity" name="Avg Humidity (%)" stroke="#10b981" strokeWidth={1.5} dot={{ r: 2 }} />
+                ]}
+                
+                {selectedChartGroup === 'wind' && [
+                  <Line key="wind" yAxisId="left" type="monotone" dataKey="WindSpeed" name="Avg Wind Speed (km/h)" stroke="#60a5fa" strokeWidth={2} dot={{ r: 3 }} />,
+                  <Bar key="prec" yAxisId="right" dataKey="Precipitation" name="Precipitation (mm)" fill="#3b82f6" opacity={0.6} barSize={12} radius={[2, 2, 0, 0]} />,
+                  <Bar key="snow" yAxisId="right" dataKey="Snowfall" name="Snowfall (cm)" fill="#a5f3fc" opacity={0.6} barSize={12} radius={[2, 2, 0, 0]} />
+                ]}
+                
+                {selectedChartGroup === 'atmosphere' && [
+                  <Area key="cloud" yAxisId="right" type="monotone" dataKey="CloudCover" name="Cloud Cover (%)" stroke="#94a3b8" fill="rgba(148, 163, 184, 0.05)" strokeWidth={1.5} />,
+                  <Line key="aqi" yAxisId="left" type="monotone" dataKey="AQI" name="Air Quality Index (AQI)" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />,
+                  <Line key="dust" yAxisId="right" type="monotone" dataKey="Dust" name="Dust (μg/m³)" stroke="#d97706" strokeWidth={1.5} dot={{ r: 2 }} />
+                ]}
               </ComposedChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* Detailed Grid Breakdown */}
-        <div className="data-section-card" style={{ padding: '24px' }}>
-          <div className="card-header-simple" style={{ marginBottom: '16px' }}>
-            <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Calendar size={20} />
-              Monthly Data Breakdown
-            </h2>
+        {/* Bottom Split Layout: Inspector & Database Table */}
+        <div className="weather-split-layout">
+          
+          {/* Detailed Month Inspector Panel */}
+          <div className="weather-inspector-card">
+            <div className="weather-inspector-header">
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <CloudSun size={18} style={{ color: 'var(--db-accent)' }} />
+                Granular Month Inspector
+              </h2>
+              {/* Selector */}
+              <select 
+                className="weather-month-dropdown"
+                value={selectedInspectorMonth}
+                onChange={(e) => setSelectedInspectorMonth(Number(e.target.value))}
+              >
+                {monthNames.map((name, i) => (
+                  <option key={i} value={i + 1}>{name}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="weather-parameter-groups">
+              {renderInspectorGroup("Solar Radiation & UV Index", <Sun size={14} />, [
+                { label: "Global Horiz Irradiance (W/m²)", meanKey: "ghiMean", minKey: "ghiMin", maxKey: "ghiMax", stdKey: "ghiStd" },
+                { label: "Direct Normal Irradiance (W/m²)", meanKey: "dniMean", minKey: "dniMin", maxKey: "dniMax", stdKey: "dniStd" },
+                { label: "Diffuse Horiz Irradiance (W/m²)", meanKey: "dhiMean", minKey: "dhiMin", maxKey: "dhiMax", stdKey: "dhiStd" },
+                { label: "Solar UV Index", meanKey: "uvIndexMean", minKey: "uvIndexMin", maxKey: "uvIndexMax", stdKey: "uvIndexStd" }
+              ])}
+
+              {renderInspectorGroup("Atmospheric & Thermal Specs", <Thermometer size={14} />, [
+                { label: "Ambient Temperature (°C)", meanKey: "temperatureMean", minKey: "temperatureMin", maxKey: "temperatureMax", stdKey: "temperatureStd" },
+                { label: "Dewpoint Temperature (°C)", meanKey: "dewpointMean", minKey: "dewpointMin", maxKey: "dewpointMax", stdKey: "dewpointStd" },
+                { label: "Relative Humidity (%)", meanKey: "humidityMean", minKey: "humidityMin", maxKey: "humidityMax", stdKey: "humidityStd" },
+                { label: "Barometric Pressure (hPa)", meanKey: "pressureMean", minKey: "pressureMin", maxKey: "pressureMax", stdKey: "pressureStd" }
+              ])}
+
+              {renderInspectorGroup("Wind & Precipitation Models", <Wind size={14} />, [
+                { label: "Wind Speed 10m (km/h)", meanKey: "windSpeedMean", minKey: "windSpeedMin", maxKey: "windSpeedMax", stdKey: "windSpeedStd" },
+                { label: "Precipitation Total (mm)", meanKey: "precipitationMean", minKey: "precipitationMin", maxKey: "precipitationMax", stdKey: "precipitationStd", decimals: 2 },
+                { label: "Snowfall Cumulative (cm)", meanKey: "snowfallMean", minKey: "snowfallMin", maxKey: "snowfallMax", stdKey: "snowfallStd", decimals: 2 }
+              ])}
+
+              {renderInspectorGroup("Sky & Air Quality Averages", <Activity size={14} />, [
+                { label: "Total Cloud Cover (%)", meanKey: "cloudcoverMean", minKey: "cloudcoverMin", maxKey: "cloudcoverMax", stdKey: "cloudcoverStd" },
+                { label: "Air Quality Index (AQI)", meanKey: "aqiMean", minKey: "aqiMin", maxKey: "aqiMax", stdKey: "aqiStd" },
+                { label: "Dust Particle Load (μg/m³)", meanKey: "dustMean", minKey: "dustMin", maxKey: "dustMax", stdKey: "dustStd" }
+              ])}
+
+              {renderInspectorGroup("Astronomical Geometry", <Compass size={14} />, [
+                { label: "Solar Elevation Angle (°)", meanKey: "sunElevationMean", minKey: "sunElevationMin", maxKey: "sunElevationMax", stdKey: "sunElevationStd" },
+                { label: "Solar Azimuth Angle (°)", meanKey: "sunAzimuthMean", minKey: "sunAzimuthMin", maxKey: "sunAzimuthMax", stdKey: "sunAzimuthStd" }
+              ])}
+            </div>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(250px, 1fr))', gap: '16px' }}>
-            {weatherCacheData.monthlyData.map((month, idx) => (
-               <div key={idx} style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.06)', borderRadius: '8px', padding: '16px' }}>
-                 <div style={{ fontSize: '1rem', color: 'var(--db-accent)', fontWeight: '600', marginBottom: '12px' }}>
-                   {monthNames[month.month - 1]}
-                 </div>
-                 <div style={{ color: 'var(--db-text-secondary)', fontSize: '0.85rem', lineHeight: '1.6' }}>
-                   <p><strong style={{ color: '#fff' }}>Temp (Avg):</strong> {formatVal(month.temperatureMean, 1)} °C</p>
-                   <p><strong style={{ color: '#fff' }}>DNI (Avg):</strong> {formatVal(month.dniMean, 1)} W/m²</p>
-                   <p><strong style={{ color: '#fff' }}>Cloud Cover:</strong> {formatVal(month.cloudcoverMean, 1)} %</p>
-                   <p><strong style={{ color: '#fff' }}>Dust (Avg):</strong> {formatVal(month.dustMean, 1)} μg/m³</p>
-                 </div>
-               </div>
-            ))}
+
+          {/* Database Table Panel */}
+          <div className="weather-table-card">
+            <div className="weather-table-header">
+              <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px', margin: 0, fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em' }}>
+                <Calendar size={18} style={{ color: 'var(--db-accent)' }} />
+                Meteorological Database
+              </h2>
+            </div>
+            
+            <div className="weather-table-scroll">
+              <table className="weather-database-table">
+                <thead>
+                  <tr>
+                    <th>Month</th>
+                    <th>Temp (°C)</th>
+                    <th>GHI (W/m²)</th>
+                    <th>DNI (W/m²)</th>
+                    <th>Wind (km/h)</th>
+                    <th>AQI</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {weatherCacheData.monthlyData.map((m) => (
+                    <tr 
+                      key={m.month} 
+                      onClick={() => setSelectedInspectorMonth(m.month)}
+                      style={{ cursor: 'pointer', background: selectedInspectorMonth === m.month ? 'rgba(255, 215, 0, 0.03)' : 'transparent' }}
+                    >
+                      <td className="month-col">{monthNames[m.month - 1]}</td>
+                      <td>{formatVal(m.temperatureMean, 1)}</td>
+                      <td>{formatVal(m.ghiMean, 1)}</td>
+                      <td>{formatVal(m.dniMean, 1)}</td>
+                      <td>{formatVal(m.windSpeedMean, 1)}</td>
+                      <td>{formatVal(m.aqiMean, 1)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
+          
         </div>
       </div>
     );
@@ -953,7 +1218,10 @@ const DashboardPage = () => {
           <div className="brand-icon">
             <Zap size={18} fill="currentColor" />
           </div>
-          <span className="brand-name">SolarPredict AI</span>
+          <div className="db-brand-text-container">
+            <span className="brand-name">SolarPredict AI</span>
+            <span className="db-brand-subtext">Powered By NitroX</span>
+          </div>
         </div>
         <button 
           className="mobile-menu-toggle" 
@@ -971,7 +1239,10 @@ const DashboardPage = () => {
             <div className="brand-icon">
               <Zap size={18} fill="currentColor" />
             </div>
-            <span className="brand-name">SolarPredict AI</span>
+            <div className="db-brand-text-container">
+              <span className="brand-name">SolarPredict AI</span>
+              <span className="db-brand-subtext">Powered By NitroX</span>
+            </div>
           </div>
           <div className="system-status">
             <span className="status-label">Operations Control</span>

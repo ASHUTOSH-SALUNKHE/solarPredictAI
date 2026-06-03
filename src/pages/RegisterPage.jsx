@@ -302,7 +302,7 @@ const RegisterPage = () => {
     <main className="auth-container" id="main-content">
       <Helmet>
         <title>Create Account | SolarPredict AI</title>
-        <meta name="description" content="Register for SolarPredict AI to predict the future of solar energy with advanced machine learning and real-time atmospheric data." />
+        <meta name="description" content="Register for SolarPredict AI. Predict how many solar panels are required for your house, estimate installation and maintenance costs, get a detailed report, and forecast output with 99% accuracy." />
         <link rel="canonical" href="https://solarpredictai.xyz/register" />
         {/* JSON-LD Structured Data for Breadcrumbs */}
         <script type="application/ld+json">

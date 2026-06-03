@@ -112,7 +112,7 @@ const LoginPage = () => {
     <main className="auth-container" id="main-content">
       <Helmet>
         <title>Sign In | SolarPredict AI</title>
-        <meta name="description" content="Sign in to your SolarPredict AI account to access advanced solar forecasting, telemetry, and analytics." />
+        <meta name="description" content="Sign in to your SolarPredict AI account. Predict how many solar panels are required for your house, estimate installation and maintenance costs, get a detailed report, and forecast output with 99% accuracy." />
         <link rel="canonical" href="https://solarpredictai.xyz/login" />
         {/* JSON-LD Structured Data for Breadcrumbs */}
         <script type="application/ld+json">

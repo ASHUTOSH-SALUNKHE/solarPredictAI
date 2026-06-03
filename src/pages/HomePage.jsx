@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Play, Search, HelpCircle, CloudSun, Target } from 'lucide-react';
+import { Play, Search, HelpCircle, CloudSun, Target, ChevronLeft, ChevronRight, Zap, Activity, Compass, Database } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
 import '../styles/home.css';
 
@@ -70,6 +70,7 @@ const HomePage = () => {
   const videoRef = useRef(null);
   const [activeStep, setActiveStep] = useState(0);
   const [activeFaq, setActiveFaq] = useState(null);
+  const [activeFeedbackIndex, setActiveFeedbackIndex] = useState(0);
 
   // Steps data representing the AI Workflow
   const steps = [
@@ -286,15 +287,15 @@ const HomePage = () => {
     <main id="main-content">
       <Helmet>
         <title>Solar Panel Prediction AI & Output Forecasting | SolarPredict AI</title>
-        <meta name="description" content="SolarPredict AI is the leading solar panel prediction AI platform. Forecast solar energy generation, optimize grid output, and predict efficiency with 99% accuracy." />
-        <meta name="keywords" content="solar panel prediction ai, solar output prediction, solar forecasting, machine learning energy, smart grid optimization, photovoltaic prediction software, solar weather data" />
+        <meta name="description" content="Predict how many solar panels are required for your house, estimate installation and maintenance costs, get a detailed report, and forecast output with 99% accuracy using SolarPredict AI." />
+        <meta name="keywords" content="solar panel prediction ai, solar panel required for house, solar cost calculator, solar maintenance estimate, solar output prediction, solar forecasting, smart grid optimization, photovoltaic prediction software" />
         <link rel="canonical" href="https://solarpredictai.xyz/" />
         
         {/* Open Graph / Facebook */}
         <meta property="og:type" content="website" />
         <meta property="og:url" content="https://solarpredictai.xyz/" />
         <meta property="og:title" content="Solar Panel Prediction AI & Output Forecasting | SolarPredict AI" />
-        <meta property="og:description" content="SolarPredict AI is the leading solar panel prediction AI platform. Forecast solar energy generation, optimize grid output, and predict efficiency with 99% accuracy." />
+        <meta property="og:description" content="Predict how many solar panels are required for your house, estimate installation and maintenance costs, get a detailed report, and forecast output with 99% accuracy using SolarPredict AI." />
         <meta property="og:image" content="https://solarpredictai.xyz/solar_house.webp" />
         <meta property="og:site_name" content="SolarPredict AI" />
 
@@ -302,7 +303,7 @@ const HomePage = () => {
         <meta property="twitter:card" content="summary_large_image" />
         <meta property="twitter:url" content="https://solarpredictai.xyz/" />
         <meta property="twitter:title" content="Solar Panel Prediction AI & Output Forecasting | SolarPredict AI" />
-        <meta property="twitter:description" content="SolarPredict AI is the leading solar panel prediction AI platform. Forecast solar energy generation, optimize grid output, and predict efficiency with 99% accuracy." />
+        <meta property="twitter:description" content="Predict how many solar panels are required for your house, estimate installation and maintenance costs, get a detailed report, and forecast output with 99% accuracy using SolarPredict AI." />
         <meta property="twitter:image" content="https://solarpredictai.xyz/solar_house.webp" />
         <meta property="twitter:image:alt" content="Solar prediction AI forecasting software interface" />
         
@@ -319,7 +320,7 @@ const HomePage = () => {
                   "@id": "https://solarpredictai.xyz/#website",
                   "url": "https://solarpredictai.xyz/",
                   "name": "SolarPredict AI",
-                  "description": "Solar Energy Forecasting & Analytics Platform",
+                  "description": "Predict how many solar panels are required for your house, estimate installation and maintenance costs, get a detailed report, and forecast output with 99% accuracy.",
                   "potentialAction": {
                     "@type": "SearchAction",
                     "target": "https://solarpredictai.xyz/search?q={search_term_string}",
@@ -560,6 +561,148 @@ const HomePage = () => {
         </div>
       </section>
 
+      {/* Provided Services Section */}
+      <section className="services-section" aria-label="Our Provided Services">
+        <div className="services-container">
+          <span className="section-tag">Platform Offerings</span>
+          <h2 className="section-title" style={{ marginBottom: '24px' }}>Provided Services</h2>
+          <p style={{ color: '#64748b', fontSize: '1rem', maxWidth: '600px', marginBottom: '40px', lineHeight: '1.6' }}>
+            We provide state-of-the-art predictive algorithms and live telemetry streams to orchestrate solar array operations with unmatched precision.
+          </p>
+          
+          <div className="services-grid">
+            <div className="service-card">
+              <div className="service-icon-box">
+                <CloudSun size={24} />
+              </div>
+              <h3 className="service-title">Solar Yield Forecasting</h3>
+              <p className="service-desc">
+                High-resolution forecasting models projecting solar outputs hours and days in advance, integrating localized historical climate profiles.
+              </p>
+            </div>
+            
+            <div className="service-card">
+              <div className="service-icon-box">
+                <Zap size={24} />
+              </div>
+              <h3 className="service-title">Grid Balance Telemetry</h3>
+              <p className="service-desc">
+                Seamless APIs to stream and balance load patterns, mitigating solar intermittency and optimizing grid efficiency.
+              </p>
+            </div>
+            
+            <div className="service-card">
+              <div className="service-icon-box">
+                <Database size={24} />
+              </div>
+              <h3 className="service-title">Historical Climatology</h3>
+              <p className="service-desc">
+                Access over 5 years of historical Direct Normal Irradiance (DNI) and Global Horizontal Irradiance (GHI) databases.
+              </p>
+            </div>
+            
+            <div className="service-card">
+              <div className="service-icon-box">
+                <Activity size={24} />
+              </div>
+              <h3 className="service-title">Battery Storage Timing</h3>
+              <p className="service-desc">
+                Intelligent charge and discharge dispatch scheduling aligned with solar peak times, avoiding expensive utility surcharges.
+              </p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Client Feedback Section (Styled after user's reference photo) */}
+      <section className="feedback-section" aria-label="Client Feedback">
+        <div className="feedback-container">
+          <div className="feedback-header-row">
+            <div>
+              <span className="section-tag">Operational Impact</span>
+              <h2 className="feedback-section-title">Client Success &amp; Feedback</h2>
+            </div>
+            <Link to="/register" className="feedback-btn">
+              Explore Case Studies →
+            </Link>
+          </div>
+          
+          <div className="feedback-cards-grid">
+            {/* Custom Carousel Navigation Overlays */}
+            <button 
+              className="feedback-arrow-btn left" 
+              onClick={() => setActiveFeedbackIndex(prev => (prev === 0 ? 2 : prev - 1))}
+              aria-label="Previous slide"
+            >
+              <ChevronLeft size={36} />
+            </button>
+            
+            <button 
+              className="feedback-arrow-btn right" 
+              onClick={() => setActiveFeedbackIndex(prev => (prev === 2 ? 0 : prev + 1))}
+              aria-label="Next slide"
+            >
+              <ChevronRight size={36} />
+            </button>
+
+            {/* Testimonial Cards */}
+            {[
+              {
+                image: "/solar_client_res.png",
+                title: "1001 Solaris Way, Dubai",
+                location: "Dubai Marina, UAE",
+                quote: "“Optimized our home battery storage efficiency by 24% using the Nitro Engine's solar forecasting. The setup was seamless.”",
+                client: "Aisha Al-Mansoori, Residential Owner"
+              },
+              {
+                image: "/solar_client_com.png",
+                title: "Helios Commercial Tower, Pune",
+                location: "Magarpatta City, Pune",
+                quote: "“Integrating the SolarPredict API reduced our building's grid dependency, saving over $18,000 in Year 1 utility expenses.”",
+                client: "Rajesh Sharma, Facility Manager"
+              },
+              {
+                image: "/solar_client_agri.png",
+                title: "Apex Agri-Grid Farm, Sydney",
+                location: "Hunter Valley, Australia",
+                quote: "“Accurate solar elevation mapping helped us coordinate heavy irrigation pumps with peak generation periods.”",
+                client: "Marcus Vance, Agricultural Director"
+              }
+            ].map((item, idx) => {
+              const isVisible = idx === activeFeedbackIndex;
+              return (
+                <div 
+                  key={idx} 
+                  className={`feedback-item-card ${isVisible ? 'active-slide' : 'inactive-slide'}`}
+                >
+                  <div className="feedback-image-wrapper">
+                    <img src={item.image} alt={item.title} className="feedback-img" loading="lazy" />
+                  </div>
+                  <div className="feedback-info">
+                    <h3 className="feedback-asset-title">{item.title}</h3>
+                    <p className="feedback-location">{item.location}</p>
+                    <blockquote className="feedback-quote">{item.quote}</blockquote>
+                    <span className="feedback-client-name">{item.client}</span>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          
+          {/* Pagination Indicators */}
+          <div className="feedback-dots">
+            {[0, 1, 2].map((i) => (
+              <button 
+                key={i} 
+                className={`feedback-dot ${activeFeedbackIndex === i ? 'active' : ''}`}
+                onClick={() => setActiveFeedbackIndex(i)}
+                aria-label={`Go to slide ${i + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* Partners Section */}
       <section className="partners-section" aria-label="Partner Network">
         <div className="partners-container">
@@ -580,7 +723,7 @@ const HomePage = () => {
                 <div className="partner-card partner-card-mint"></div>
                 <div className="partner-card partner-card-cream">
                   <div className="partner-logo-container">
-                    <div className="partner-logo-graphic" style={{ border: '2px solid #123832', borderRadius: '8px', padding: '10px', marginBottom: '4px' }}>
+                    <div className="partner-logo-graphic partner-helios-icon">
                       <Search size={26} strokeWidth={2} />
                     </div>
                     <span className="partner-logo-name">Helios Grid</span>
@@ -594,11 +737,11 @@ const HomePage = () => {
                 <div className="partner-card partner-card-slate"></div>
                 <div className="partner-card partner-card-cream">
                   <div className="partner-logo-container">
-                    <div className="partner-logo-name" style={{ fontSize: '2.5rem', fontWeight: 800, lineHeight: 1, letterSpacing: '0.05em' }}>
+                    <div className="partner-sg-text">
                       SG
                     </div>
-                    <div style={{ width: '24px', height: '2px', backgroundColor: '#123832', margin: '6px 0' }} />
-                    <span className="partner-logo-name" style={{ fontSize: '0.65rem', fontWeight: 600 }}>SolarGrid Labs</span>
+                    <div className="partner-sg-line" />
+                    <span className="partner-logo-name partner-sg-label">SolarGrid Labs</span>
                   </div>
                 </div>
               </div>
@@ -608,7 +751,7 @@ const HomePage = () => {
                 <div className="partner-card partner-card-gradient-1"></div>
                 <div className="partner-card partner-card-cream">
                   <div className="partner-logo-container">
-                    <div className="partner-logo-graphic" style={{ marginBottom: '4px' }}>
+                    <div className="partner-logo-graphic partner-apex-icon">
                       <Target size={36} strokeWidth={1.5} />
                     </div>
                     <span className="partner-logo-name">Apex Climate</span>
@@ -674,7 +817,10 @@ const HomePage = () => {
                 <div className="brand-icon-wrapper">
                   <CloudSun size={20} />
                 </div>
-                <span className="brand-text">SolarPredict AI</span>
+                <div className="brand-text-container">
+                  <span className="brand-text">SolarPredict AI</span>
+                  <span className="brand-subtext">Powered By NitroX</span>
+                </div>
               </Link>
               <p className="footer-brand-desc">
                 Leading the transition to smart, highly-predictive renewable energy grids through neural network analytics.

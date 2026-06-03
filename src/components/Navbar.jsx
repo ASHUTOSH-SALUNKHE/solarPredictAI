@@ -31,18 +31,39 @@ const Navbar = () => {
     setIsMobileMenuOpen(false);
   }, [location]);
 
+  const showBanner = !isAuthenticated && !isScrolled;
+
   return (
     <>
       {/* Accessibility AA: Skip to main content link */}
       <a href="#main-content" className="skip-to-content">Skip to main content</a>
-      <nav className={`navbar glass-effect ${isScrolled ? 'navbar-scrolled' : ''}`} aria-label="Main Navigation">
+      
+      {/* Top Announcement Promo Banner */}
+      {showBanner && (
+        <div className="top-promo-banner" role="banner">
+          <div className="top-promo-container">
+            <span className="promo-badge">Offer</span>
+            <span className="promo-text">
+              Sign in and get <strong className="promo-credits-glow">100 credits !!!</strong> for free , limited time offer
+            </span>
+            <Link to="/register" className="promo-link" title="Claim 100 Free Credits">
+              Claim Now →
+            </Link>
+          </div>
+        </div>
+      )}
+
+      <nav className={`navbar glass-effect ${isScrolled ? 'navbar-scrolled' : ''} ${showBanner ? 'navbar-has-banner' : ''}`} aria-label="Main Navigation">
         <div className="navbar-container">
           {/* Brand/Logo */}
           <Link to="/" className="nav-brand" title="SolarPredict AI Home">
             <div className="brand-icon-wrapper">
               <Sun size={20} className="brand-icon" />
             </div>
-            <span className="brand-text">SolarPredict AI</span>
+            <div className="brand-text-container">
+              <span className="brand-text">SolarPredict AI</span>
+              <span className="brand-subtext">Powered By NitroX</span>
+            </div>
           </Link>
 
         {/* Desktop Navigation Links */}

@@ -297,7 +297,7 @@ const ForgotPasswordPage = () => {
     <main className="auth-container" id="main-content">
       <Helmet>
         <title>Forgot Password | SolarPredict AI</title>
-        <meta name="description" content="Reset your password for SolarPredict AI." />
+        <meta name="description" content="Reset your password for SolarPredict AI. Predict how many solar panels are required for your house, estimate installation and maintenance costs, get a detailed report, and forecast output with 99% accuracy." />
         <link rel="canonical" href="https://solarpredictai.xyz/forgot-password" />
         {/* JSON-LD Structured Data for Breadcrumbs */}
         <script type="application/ld+json">

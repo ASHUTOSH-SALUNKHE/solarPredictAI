@@ -72,6 +72,24 @@
   color: var(--db-text-primary);
 }
 
+.db-brand-text-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  line-height: 1.1;
+}
+
+.db-brand-subtext {
+  font-size: 0.55rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  background: linear-gradient(135deg, #ffffff 40%, var(--db-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  margin-top: 1px;
+}
+
 .system-status {
   display: flex;
   flex-direction: column;
@@ -1504,4 +1522,418 @@
     align-items: flex-start;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Location & Siting Data Section Styles
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.siting-grid {
+  display: grid;
+  grid-template-columns: 1fr 1.5fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .siting-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.siting-geo-card {
+  background-color: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  padding: 24px;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.siting-geo-card:hover {
+  border-color: var(--db-accent-glow);
+  box-shadow: 0 0 16px rgba(255, 215, 0, 0.05);
+}
+
+.siting-map-preview {
+  height: 180px;
+  background: radial-gradient(circle at 50% 50%, rgba(255, 215, 0, 0.08) 0%, rgba(0, 0, 0, 0) 70%), 
+              repeating-linear-gradient(0deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 1px, transparent 1px, transparent 20px), 
+              repeating-linear-gradient(90deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 1px, transparent 1px, transparent 20px);
+  border: 1px dashed var(--db-border);
+  border-radius: 6px;
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  position: relative;
+}
+
+.siting-map-preview .radar-line {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--db-accent), transparent);
+  animation: radar-sweep 4s linear infinite;
+  opacity: 0.7;
+}
+
+@keyframes radar-sweep {
+  0% { top: 0%; }
+  50% { top: 100%; }
+  100% { top: 0%; }
+}
+
+.siting-geo-detail {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.siting-detail-row {
+  display: flex;
+  justify-content: space-between;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  padding-bottom: 8px;
+}
+
+.siting-detail-row:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.siting-detail-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--db-text-secondary);
+  font-weight: 600;
+}
+
+.siting-detail-value {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--db-text-primary);
+  font-family: monospace;
+}
+
+.siting-detail-value.highlight {
+  color: var(--db-accent);
+}
+
+.qa-card-container {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.qa-category-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--db-text-muted);
+  font-weight: 700;
+  margin-top: 12px;
+  margin-bottom: 4px;
+  border-left: 2px solid var(--db-accent);
+  padding-left: 8px;
+}
+
+.qa-item-card {
+  background-color: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+  transition: all 0.2s ease;
+}
+
+.qa-item-card:hover {
+  border-color: rgba(255, 255, 255, 0.08);
+  background-color: rgba(255, 255, 255, 0.01);
+}
+
+.qa-icon-wrapper {
+  color: var(--db-accent);
+  background: rgba(255, 215, 0, 0.05);
+  border-radius: 6px;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.qa-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.qa-question-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--db-text-secondary);
+  font-weight: 600;
+}
+
+.qa-question-text {
+  font-size: 13px;
+  color: var(--db-text-primary);
+  line-height: 1.4;
+  margin-bottom: 4px;
+}
+
+.qa-answer-text {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--db-accent);
+  background: rgba(255, 215, 0, 0.03);
+  border: 1px solid rgba(255, 215, 0, 0.08);
+  border-radius: 6px;
+  padding: 8px 12px;
+  display: inline-block;
+  align-self: flex-start;
+}
+
+/* ─────────────────────────────────────────────────────────────────────────────
+   Weather & Climatology Dashboard Styles
+   ───────────────────────────────────────────────────────────────────────────── */
+
+.weather-tab-group {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--db-border);
+}
+
+.weather-tab-btn {
+  background: transparent;
+  border: 1px solid var(--db-border);
+  border-radius: 4px;
+  color: var(--db-text-secondary);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 8px 16px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.weather-tab-btn:hover {
+  border-color: var(--db-border-hover);
+  color: var(--db-text-primary);
+  background-color: rgba(255, 255, 255, 0.01);
+}
+
+.weather-tab-btn.active {
+  border-color: var(--db-accent);
+  color: #000000;
+  background-color: var(--db-accent);
+  box-shadow: 0 0 12px var(--db-accent-glow);
+}
+
+.weather-split-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1200px) {
+  .weather-split-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.weather-inspector-card {
+  background-color: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.weather-inspector-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  border-bottom: 1px solid var(--db-border);
+  padding-bottom: 16px;
+}
+
+.weather-month-dropdown {
+  background-color: #000000;
+  border: 1px solid var(--db-border);
+  color: var(--db-text-primary);
+  border-radius: 4px;
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: border-color 0.2s ease;
+}
+
+.weather-month-dropdown:focus {
+  border-color: var(--db-accent);
+}
+
+.weather-parameter-groups {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.weather-parameter-section {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  padding-bottom: 16px;
+}
+
+.weather-parameter-section:last-child {
+  border-bottom: none;
+  padding-bottom: 0;
+}
+
+.weather-section-title {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--db-text-muted);
+  font-weight: 700;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.weather-parameter-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 12px;
+}
+
+.weather-parameter-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 6px;
+  background-color: rgba(255, 255, 255, 0.01);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  transition: all 0.2s ease;
+}
+
+.weather-parameter-row:hover {
+  background-color: rgba(255, 255, 255, 0.02);
+  border-color: rgba(255, 255, 255, 0.05);
+}
+
+.weather-param-name {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--db-text-primary);
+}
+
+.weather-param-val {
+  font-size: 12px;
+  font-family: monospace;
+  color: var(--db-text-secondary);
+}
+
+.weather-param-val.mean {
+  color: var(--db-accent);
+  font-weight: 700;
+}
+
+.weather-param-header-row {
+  display: grid;
+  grid-template-columns: 2fr 1.5fr 1fr 1fr 1fr;
+  padding: 4px 12px;
+  margin-bottom: 4px;
+}
+
+.weather-param-header {
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--db-text-muted);
+  font-weight: 700;
+}
+
+.weather-table-card {
+  background-color: var(--db-surface);
+  border: 1px solid var(--db-border);
+  border-radius: 8px;
+  padding: 24px;
+}
+
+.weather-table-header {
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--db-border);
+  padding-bottom: 12px;
+}
+
+.weather-table-scroll {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.weather-database-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.weather-database-table th {
+  padding: 12px 16px;
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--db-text-muted);
+  font-weight: 700;
+  border-bottom: 1px solid var(--db-border);
+  white-space: nowrap;
+}
+
+.weather-database-table td {
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--db-text-secondary);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  font-family: monospace;
+  white-space: nowrap;
+}
+
+.weather-database-table tr:hover td {
+  color: var(--db-text-primary);
+  background-color: rgba(255, 255, 255, 0.01);
+}
+
+.weather-database-table tr:last-child td {
+  border-bottom: none;
+}
+
+.weather-database-table td.month-col {
+  font-family: inherit;
+  font-weight: 600;
+  color: var(--db-accent);
+}
+
+
 
