@@ -12,6 +12,9 @@ const setLocalStorageProgress = (userId, progressData) => {
 export const getPredictionProgress = async (userId) => {
   try {
     const response = await api.get('/api/prediction/progress');
+    if (response.data) {
+      setLocalStorageProgress(userId, response.data);
+    }
     return response.data;
   } catch (error) {
     console.warn('[PredictionService] API GET /api/prediction/progress failed, falling back to localStorage.', error);

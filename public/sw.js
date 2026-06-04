@@ -35,8 +35,8 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       caches.match(event.request).then((cachedResponse) => {
         const fetchPromise = fetch(event.request).then((networkResponse) => {
-          // Only cache successful responses
-          if (networkResponse.ok && networkResponse.type === 'basic' && event.request.url.startsWith('http')) {
+          // Only cache successful responses (exclude 206 Partial Content as Cache API does not support it)
+          if (networkResponse.ok && networkResponse.status !== 206 && networkResponse.type === 'basic' && event.request.url.startsWith('http')) {
             const responseToCache = networkResponse.clone();
             caches.open(CACHE_NAME).then((cache) => {
               cache.put(event.request, responseToCache);

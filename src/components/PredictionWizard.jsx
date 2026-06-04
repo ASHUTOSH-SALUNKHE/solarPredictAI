@@ -1,21 +1,21 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  MapPin, Sparkles, RefreshCw, Sun, Zap, CloudSun, Wind, 
-  Thermometer, Droplets, Lock, Compass, Activity, CheckCircle2, 
+import {
+  MapPin, Sparkles, RefreshCw, Sun, Zap, CloudSun, Wind,
+  Thermometer, Droplets, Lock, Compass, Activity, CheckCircle2,
   AlertTriangle, ArrowRight, Eye, RefreshCcw
 } from 'lucide-react';
 import PredictionStepper from './PredictionStepper';
 import questionsData from '../corequestions.json';
 import api from '../services/api';
-import { 
+import {
   getPredictionProgress,
   getStep1Data,
-  saveStep1Progress, 
+  saveStep1Progress,
   editAnswersStep1,
   checkEditRateLimit,
-  saveStep2Progress, 
-  saveStep3Progress, 
+  saveStep2Progress,
+  saveStep3Progress,
   resetPredictionProgress,
   getSolarReport
 } from '../services/predictionService';
@@ -23,7 +23,7 @@ import '../styles/predictionWizard.css';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initialReportData }) => {
+const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initialReportData, refreshCredits }) => {
   // Stepper state
   const [activeStep, setActiveStep] = useState(1);
   const [progress, setProgress] = useState({
@@ -38,7 +38,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
   const [latitude, setLatitude] = useState('');
   const [longitude, setLongitude] = useState('');
   const [resolvedAddress, setResolvedAddress] = useState('');
-  
+
   const [messages, setMessages] = useState([]);
   const [currentNodeId, setCurrentNodeId] = useState(null);
   const [answers, setAnswers] = useState({});
@@ -48,7 +48,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
   const [optionsList, setOptionsList] = useState([]);
   const [allowFreeText, setAllowFreeText] = useState(false);
   const [locationError, setLocationError] = useState('');
-  
+
   const chatEndRef = useRef(null);
 
   // Step 2: Fetch Weather Data states
@@ -82,7 +82,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
         const savedProgress = await getPredictionProgress(userId);
         if (savedProgress) {
           const newProgress = { ...progress };
-          
+
           if (savedProgress.step >= 1) {
             newProgress.step1 = {
               completed: true,
@@ -110,15 +110,15 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
             // Instantly load completed prediction results into parent
             if (savedProgress.location) {
               getSolarReport(userId).then(report => {
-                 if (report) {
-                   newProgress.step3.predictionResult = report;
-                   onPredictionComplete(report, {
-                     latitude: parseFloat(savedProgress.location.lat),
-                     longitude: parseFloat(savedProgress.location.lon),
-                     address: savedProgress.location.address,
-                     answers: savedProgress.answers
-                   });
-                 }
+                if (report) {
+                  newProgress.step3.predictionResult = report;
+                  onPredictionComplete(report, {
+                    latitude: parseFloat(savedProgress.location.lat),
+                    longitude: parseFloat(savedProgress.location.lon),
+                    address: savedProgress.location.address,
+                    answers: savedProgress.answers
+                  });
+                }
               });
             }
           }
@@ -154,7 +154,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
   // ----------------------------------------------------
   const handleGeocodingLookup = async () => {
     if (!latitude || !longitude) return;
-    
+
     const latNum = parseFloat(latitude);
     const lonNum = parseFloat(longitude);
     if (isNaN(latNum) || latNum < -90.0 || latNum > 90.0) {
@@ -193,7 +193,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
   const handleConfirmLocation = () => {
     setStep1Stage('chat');
     setMessages([]);
-    
+
     let sanitizedAddress = resolvedAddress || '';
     if (sanitizedAddress.length > 500) {
       sanitizedAddress = sanitizedAddress.substring(0, 500);
@@ -211,7 +211,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
     if (!items || items.length === 0) return null;
     if (!answer) return items[0];
     const lowerAnswer = answer.toLowerCase();
-    
+
     for (const item of items) {
       if (item.keywords && item.keywords.length > 0) {
         const hasKeyword = item.keywords.some(kw => lowerAnswer.includes(kw.toLowerCase()));
@@ -240,7 +240,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
     }
 
     setMessages(prev => [...prev, { id: Math.random().toString(), sender: 'user', text: processedAnswer }]);
-    
+
     const currentNode = questionsData[currentNodeId];
 
     // Enforce key limit of 100 characters per answer entry key
@@ -268,10 +268,10 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
       const messageText = matchedReaction.message.replace('{answer}', processedAnswer);
       await addAiMessageWithTyping(messageText);
     }
-    
+
     const matchedNext = findKeywordMatch(currentNode.next, processedAnswer);
     const nextNodeId = matchedNext ? matchedNext.node : null;
-    
+
     if (nextNodeId && questionsData[nextNodeId]) {
       setCurrentNodeId(nextNodeId);
     } else {
@@ -313,7 +313,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
       try {
         // Edit mode: only update answers in MongoDB, no credit deduction
         await editAnswersStep1(userId, finalAnswers);
-        
+
         // Clear cached Step 1 data so the next "Edit Answers" click fetches fresh data
         localStorage.removeItem(`step1_edit_cache_${userId}`);
 
@@ -357,6 +357,9 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
           }
         }));
         setActiveStep(2);
+        if (refreshCredits) {
+          refreshCredits();
+        }
       } catch (error) {
         console.error("Failed to save Step 1 progress:", error);
         let errorMsg = "Failed to complete Step 1. Please try again.";
@@ -374,22 +377,22 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
 
   useEffect(() => {
     if (step1Stage !== 'chat' || !currentNodeId || !questionsData[currentNodeId]) return;
-    
+
     const askQuestion = async () => {
       const node = questionsData[currentNodeId];
       await addAiMessageWithTyping(node.questionText);
-      
+
       setOptionsList(node.options || []);
       setAllowFreeText(node.allowFreeText || false);
       setOptionsDisabled(false);
-      
+
       if (node.id === 'q_location') {
         const locationVal = resolvedAddress || `${latitude}, ${longitude}`;
         await delay(500);
         await handleUserAnswer(locationVal);
       }
     };
-    
+
     askQuestion();
   }, [currentNodeId, step1Stage]);
 
@@ -407,10 +410,10 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
       const response = await fetch(
         `https://api.open-meteo.com/v1/forecast?latitude=${latVal}&longitude=${lonVal}&current=temperature_2m,relative_humidity_2m,cloud_cover,wind_speed_10m,shortwave_radiation`
       );
-      
+
       if (!response.ok) throw new Error("Weather service request failed");
       const data = await response.json();
-      
+
       const weatherSummary = {
         temp: data.current?.temperature_2m ?? 25.0,
         humidity: data.current?.relative_humidity_2m ?? 60,
@@ -485,6 +488,10 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
         answers: answers
       });
 
+      if (refreshCredits) {
+        refreshCredits();
+      }
+
     } catch (error) {
       console.error("Failed to generate solar predictions:", error);
       setPredictionError(true);
@@ -537,7 +544,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
 
       {/* Step Cards Grid / Stack */}
       <div className="step-card-stack" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-        
+
         {/* ==================================================== */}
         {/* STEP 1: LOCATION & QUESTIONNAIRE CARD */}
         {/* ==================================================== */}
@@ -713,25 +720,25 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                               }}
                               style={{ paddingRight: '80px' }}
                             />
-                            <span 
-                              className="chat-char-counter" 
-                              style={{ 
-                                position: 'absolute', 
-                                right: '12px', 
-                                fontSize: '0.75rem', 
+                            <span
+                              className="chat-char-counter"
+                              style={{
+                                position: 'absolute',
+                                right: '12px',
+                                fontSize: '0.75rem',
                                 fontWeight: '600',
                                 fontFamily: 'monospace',
                                 pointerEvents: 'none',
-                                color: userInputValue.length >= 1000 
-                                  ? '#ef4444' 
-                                  : userInputValue.length >= 800 
-                                    ? '#f59e0b' 
-                                    : 'var(--db-text-muted, #8b8b8f)', 
+                                color: userInputValue.length >= 1000
+                                  ? '#ef4444'
+                                  : userInputValue.length >= 800
+                                    ? '#f59e0b'
+                                    : 'var(--db-text-muted, #8b8b8f)',
                                 transition: 'color 0.2s ease',
                                 background: 'rgba(20, 20, 25, 0.75)',
                                 padding: '2px 6px',
                                 borderRadius: '4px',
-                                border: userInputValue.length >= 800 
+                                border: userInputValue.length >= 800
                                   ? (userInputValue.length >= 1000 ? '1px solid rgba(239, 68, 68, 0.3)' : '1px solid rgba(245, 158, 11, 0.3)')
                                   : '1px solid rgba(255, 255, 255, 0.05)'
                               }}
@@ -759,7 +766,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                     <h4 style={{ color: '#fff', margin: 0, fontSize: '1rem', fontWeight: '600' }}>
                       📋 Review &amp; Edit Questionnaire Answers
                     </h4>
-                    <button 
+                    <button
                       className="action-btn-secondary"
                       style={{ fontSize: '0.75rem', padding: '6px 12px', height: 'auto' }}
                       onClick={() => setStep1Stage('chat')}
@@ -780,12 +787,12 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                       .map((key) => {
                         const question = questionsData[key];
                         return (
-                          <div 
-                            key={key} 
-                            style={{ 
-                              background: 'rgba(255,255,255,0.02)', 
-                              border: '1px solid rgba(255,255,255,0.06)', 
-                              borderRadius: '8px', 
+                          <div
+                            key={key}
+                            style={{
+                              background: 'rgba(255,255,255,0.02)',
+                              border: '1px solid rgba(255,255,255,0.06)',
+                              borderRadius: '8px',
                               padding: '12px 16px',
                               display: 'flex',
                               flexDirection: 'column',
@@ -809,13 +816,13 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                                   }
                                 }}
                                 rows={2}
-                                style={{ 
-                                  width: '100%', 
-                                  background: 'rgba(0,0,0,0.2)', 
-                                  border: '1px solid rgba(255,255,255,0.1)', 
-                                  color: '#fff', 
-                                  borderRadius: '6px', 
-                                  padding: '8px 10px', 
+                                style={{
+                                  width: '100%',
+                                  background: 'rgba(0,0,0,0.2)',
+                                  border: '1px solid rgba(255,255,255,0.1)',
+                                  color: '#fff',
+                                  borderRadius: '6px',
+                                  padding: '8px 10px',
                                   fontSize: '0.85rem',
                                   resize: 'vertical',
                                   outline: 'none',
@@ -824,17 +831,17 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                                   lineHeight: '1.4'
                                 }}
                               />
-                              <span 
-                                style={{ 
-                                  position: 'absolute', 
-                                  right: '10px', 
-                                  bottom: '8px', 
-                                  fontSize: '0.7rem', 
+                              <span
+                                style={{
+                                  position: 'absolute',
+                                  right: '10px',
+                                  bottom: '8px',
+                                  fontSize: '0.7rem',
                                   fontFamily: 'monospace',
-                                  color: (answers[key] || '').length >= 1000 
-                                    ? '#ef4444' 
-                                    : (answers[key] || '').length >= 800 
-                                      ? '#f59e0b' 
+                                  color: (answers[key] || '').length >= 1000
+                                    ? '#ef4444'
+                                    : (answers[key] || '').length >= 800
+                                      ? '#f59e0b'
                                       : 'var(--db-text-muted)',
                                   background: 'rgba(20,20,25,0.85)',
                                   padding: '2px 4px',
@@ -851,8 +858,8 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                   </div>
 
                   <div className="step-actions" style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
-                    <button 
-                      className="action-btn-secondary" 
+                    <button
+                      className="action-btn-secondary"
                       onClick={() => {
                         // Restart chat
                         let sanitizedAddress = resolvedAddress || '';
@@ -871,8 +878,8 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                     >
                       Restart Chat
                     </button>
-                    <button 
-                      className="action-btn-primary" 
+                    <button
+                      className="action-btn-primary"
                       onClick={() => completeStep1(answers, progress.step1.completed)}
                     >
                       {progress.step1.completed ? 'Save Edited Answers' : 'Confirm & Submit'}
@@ -903,7 +910,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                 onClick={async () => {
                   try {
                     setIsTyping(true);
-                    
+
                     // 1. Check rate limit
                     const limitCheck = await checkEditRateLimit();
                     if (!limitCheck.allowed) {
@@ -998,7 +1005,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
           {activeStep === 2 && (
             <div className="step-content">
               <p style={{ fontSize: '0.85rem', color: 'var(--db-text-secondary)', lineHeight: '1.5' }}>
-                We will query satellite records and micro-climate models to retrieve atmospheric parameters: 
+                We will query satellite records and micro-climate models to retrieve atmospheric parameters:
                 irradiance, cloud cover index, ambient temperature coefficients, and humidity records.
               </p>
 
@@ -1066,8 +1073,8 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
           {activeStep === 3 && (
             <div className="step-content">
               <p style={{ fontSize: '0.85rem', color: 'var(--db-text-secondary)', lineHeight: '1.5' }}>
-                Generate your customized solar report. This aggregates your location details, chatbot questionnaire answers, 
-                and climate profiles into a 12-month aggregated feasibility model. 
+                Generate your customized solar report. This aggregates your location details, chatbot questionnaire answers,
+                and climate profiles into a 12-month aggregated feasibility model.
                 <br />
                 <strong style={{ color: 'var(--db-accent)' }}>Note: This operation consumes 1 report credit.</strong>
               </p>
@@ -1094,7 +1101,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                       </div>
                     </div>
                   )}
-                  
+
                   <div className="step-actions">
                     <button className="action-btn-primary" onClick={handleGeneratePrediction}>
                       <Sparkles size={14} />
@@ -1114,8 +1121,8 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
               <h2>Prediction Ready!</h2>
               <p>Your solar feasibility report has been successfully generated using the AI climatology solver.</p>
               <div style={{ display: 'flex', gap: '12px', marginTop: '8px' }}>
-                <button 
-                  className="action-btn-secondary" 
+                <button
+                  className="action-btn-secondary"
                   style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '8px 16px' }}
                   onClick={() => {
                     if (progress.step3.predictionResult && progress.step1.location) {
@@ -1131,8 +1138,8 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                   <Eye size={14} />
                   View Report
                 </button>
-                <button 
-                  className="action-btn-secondary" 
+                <button
+                  className="action-btn-secondary"
                   style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '8px 16px', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#ef4444' }}
                   onClick={handleStartNewPrediction}
                 >

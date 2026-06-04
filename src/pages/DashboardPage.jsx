@@ -6,23 +6,24 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import questionsData from '../corequestions.json';
 import PredictionWizard from '../components/PredictionWizard';
+import FinalReportView from '../components/FinalReportView';
 import { resetPredictionProgress, getStep1Data, getStep2Data } from '../services/predictionService';
 import '../styles/predictionWizard.css';
-import { 
-  Menu, 
-  X, 
-  TrendingUp, 
-  Sun, 
-  CloudSun, 
-  Sunset, 
-  AlertTriangle, 
-  Info, 
-  CheckCircle2, 
-  Settings, 
-  HeartPulse, 
-  LayoutDashboard, 
-  LineChart, 
-  FileDown, 
+import {
+  Menu,
+  X,
+  TrendingUp,
+  Sun,
+  CloudSun,
+  Sunset,
+  AlertTriangle,
+  Info,
+  CheckCircle2,
+  Settings,
+  HeartPulse,
+  LayoutDashboard,
+  LineChart,
+  FileDown,
   Compass,
   Zap,
   Grid,
@@ -51,7 +52,7 @@ const DashboardPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [timeString, setTimeString] = useState('');
-  
+
   const [credits, setCredits] = useState(null);
   const navigate = useNavigate();
   const { logout, isAuthenticated, userId } = useAuth();
@@ -120,13 +121,14 @@ const DashboardPage = () => {
 
   const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-  
+
   const fetchCredits = async () => {
     try {
       const response = await api.get('/api/user/credits');
       const newCredits = response.data.credits;
       setCredits(newCredits);
-      localStorage.setItem('user_credits_cache', JSON.stringify({
+      const cacheKey = userId ? `user_credits_cache_${userId}` : 'user_credits_cache';
+      localStorage.setItem(cacheKey, JSON.stringify({
         credits: newCredits,
         fetchedAt: Date.now()
       }));
@@ -139,22 +141,22 @@ const DashboardPage = () => {
     if (!isAuthenticated) return;
 
     const initCredits = async () => {
-      const cached = localStorage.getItem('user_credits_cache');
+      const cacheKey = userId ? `user_credits_cache_${userId}` : 'user_credits_cache';
+      const cached = localStorage.getItem(cacheKey);
       if (cached) {
         try {
           const parsedCache = JSON.parse(cached);
-          if (parsedCache && typeof parsedCache.credits === 'object') {
-            localStorage.removeItem('user_credits_cache');
-            fetchCredits();
-          } else {
+          if (parsedCache && parsedCache.credits !== undefined && parsedCache.credits !== null) {
             setCredits(parsedCache.credits);
             
             const isOlderThan5Mins = Date.now() - parsedCache.fetchedAt > 5 * 60 * 1000;
             if (isOlderThan5Mins) {
               fetchCredits();
             }
+          } else {
+            fetchCredits();
           }
-        } catch (e) {
+        } catch {
           fetchCredits();
         }
       } else {
@@ -162,7 +164,8 @@ const DashboardPage = () => {
       }
     };
     initCredits();
-  }, [isAuthenticated]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, userId]);
 
 
 
@@ -191,7 +194,7 @@ const DashboardPage = () => {
       setTotalOutput(prev => +(prev + (Math.random() * 0.1 - 0.05)).toFixed(2));
       setAccuracy(prev => +(prev + (Math.random() * 0.2 - 0.1)).toFixed(1));
       setPanelsActive(() => Math.random() > 0.85 ? 1419 : 1420);
-      
+
       setShowGlow(true);
       setTimeout(() => setShowGlow(false), 800);
     }, 4000);
@@ -204,6 +207,7 @@ const DashboardPage = () => {
     { id: 'analytics', label: 'Analytics', icon: <LineChart size={18} /> },
     { id: 'predictions', label: 'Predictions', icon: <Compass size={18} /> },
     { id: 'management', label: 'Farm Management', icon: <Grid size={18} /> },
+    { id: 'final_report', label: 'Final Report', icon: <FileText size={18} /> },
     { id: 'health', label: 'System Health', icon: <HeartPulse size={18} /> },
     { id: 'siting', label: 'Location & Siting Questionnaire', icon: <MapPin size={18} /> },
     { id: 'weather', label: 'Weather Data', icon: <CloudSun size={18} /> },
@@ -219,7 +223,7 @@ const DashboardPage = () => {
         {/* Key Metrics Grid */}
         <div className="metrics-grid">
           {/* Card 1: Total Output */}
-          <motion.div 
+          <motion.div
             className="metric-card"
             animate={{ borderColor: showGlow ? 'var(--db-accent)' : 'var(--db-border)' }}
             transition={{ duration: 0.5 }}
@@ -241,7 +245,7 @@ const DashboardPage = () => {
           </motion.div>
 
           {/* Card 2: Forecast Accuracy */}
-          <motion.div 
+          <motion.div
             className="metric-card"
             animate={{ borderColor: showGlow ? 'var(--db-accent)' : 'var(--db-border)' }}
             transition={{ duration: 0.5 }}
@@ -272,7 +276,7 @@ const DashboardPage = () => {
           </div>
 
           {/* Card 4: Active Panels */}
-          <motion.div 
+          <motion.div
             className="metric-card"
             animate={{ borderColor: panelsActive < 1420 ? '#ef4444' : 'var(--db-border)' }}
             transition={{ duration: 0.3 }}
@@ -307,7 +311,7 @@ const DashboardPage = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="chart-wrapper">
             <svg className="svg-chart" viewBox="0 0 1000 300" preserveAspectRatio="none">
               <defs>
@@ -316,7 +320,7 @@ const DashboardPage = () => {
                   <stop offset="100%" stopColor="var(--db-accent)" stopOpacity="0"></stop>
                 </linearGradient>
               </defs>
-              
+
               {/* Horizontal Grid Lines */}
               <line className="chart-grid-line" x1="0" x2="1000" y1="50" y2="50" />
               <line className="chart-grid-line" x1="0" x2="1000" y1="100" y2="100" />
@@ -325,21 +329,21 @@ const DashboardPage = () => {
               <line className="chart-grid-line" x1="0" x2="1000" y1="250" y2="250" />
 
               {/* Area Fill for Predicted */}
-              <path 
-                className="chart-gradient-fill" 
-                d="M 0 250 L 0 200 Q 150 180 250 100 T 500 20 T 750 150 T 1000 220 L 1000 250 Z" 
+              <path
+                className="chart-gradient-fill"
+                d="M 0 250 L 0 200 Q 150 180 250 100 T 500 20 T 750 150 T 1000 220 L 1000 250 Z"
               />
 
               {/* Predicted Curve (Yellow Glow) */}
-              <path 
-                className="chart-path-predicted" 
-                d="M 0 200 Q 150 180 250 100 T 500 20 T 750 150 T 1000 220" 
+              <path
+                className="chart-path-predicted"
+                d="M 0 200 Q 150 180 250 100 T 500 20 T 750 150 T 1000 220"
               />
 
               {/* Actual Curve (White Line - Partial for current time) */}
-              <path 
-                className="chart-path-actual" 
-                d="M 0 195 Q 140 185 240 95 T 480 25" 
+              <path
+                className="chart-path-actual"
+                d="M 0 195 Q 140 185 240 95 T 480 25"
               />
 
               {/* Current Time Indicator Line & Pulse */}
@@ -454,189 +458,95 @@ const DashboardPage = () => {
   };
 
   // ── Tab 2: Predictions (Solar Weather Report) ──────────────────────────────
-  const renderSection = (title, data, icon) => {
-    if (!data) return null;
-    
-    return (
-      <div className="data-section-card" style={{ padding: '24px', marginBottom: '16px' }}>
-        <div className="card-header-simple" style={{ marginBottom: '16px' }}>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            {icon}
-            {title}
-          </h2>
-        </div>
-        {typeof data === 'string' ? (
-          <p style={{ color: 'var(--db-text-secondary)', lineHeight: '1.6' }}>{data}</p>
-        ) : (
-          <div className="insights-grid" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))' }}>
-            {Object.entries(data).map(([k, v], idx) => (
-              <div key={idx} className="insight-card" style={{ padding: '16px', background: 'rgba(255,255,255,0.02)' }}>
-                <h4 style={{ color: 'var(--db-accent)', marginBottom: '8px', fontSize: '0.9rem' }}>{k}</h4>
-                <p style={{ fontSize: '0.85rem', color: 'var(--db-text-secondary)' }}>{v}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const renderPredictionsTab = () => {
-    if (!reportData) {
+    if (reportData) {
+      // If we have report data but are on the predictions tab, suggest they view the report
       return (
-        <PredictionWizard
-          userId={userId}
-          onPredictionComplete={(data, meta) => {
-            setReportData(data);
-            setReportMetadata(meta);
-          }}
-          onResetParent={() => {
-            setReportData(null);
-            setReportMetadata(null);
-          }}
-        />
+        <div className="empty-state-wrapper">
+          <div className="empty-state-card">
+            <div className="empty-state-icon-box">
+              <CheckCircle2 size={32} color="var(--db-success)" />
+            </div>
+            <h2>Prediction Complete</h2>
+            <p>Your AI Solar Performance Report has been generated.</p>
+            <div style={{ display: 'flex', gap: '16px', marginTop: '24px' }}>
+              <button className="empty-state-cta-btn" onClick={() => setActiveTab('final_report')}>
+                <FileText size={16} />
+                View Final Report
+              </button>
+              <button 
+                className="btn-action-outline"
+                style={{ borderColor: 'var(--db-border)', color: 'var(--db-text-muted)' }}
+                onClick={async () => {
+                  try {
+                    await resetPredictionProgress(userId);
+                    setReportData(null);
+                    setReportMetadata(null);
+                  } catch (e) {
+                    console.error(e);
+                  }
+                }}
+              >
+                <RefreshCw size={14} />
+                Start Over
+              </button>
+            </div>
+          </div>
+        </div>
       );
     }
 
-    const { charts } = reportData;
-    const hasCharts = !!charts;
-    
-    // KPI calculation
-    let avgGen = 0;
-    let totalSavings = 0;
-    let sysCost = charts?.cumulativeROI?.systemCost || 0;
-    
-    if (charts?.monthlyGeneration?.data) {
-      avgGen = charts.monthlyGeneration.data.reduce((a, b) => a + Number(b), 0) / charts.monthlyGeneration.data.length;
-    }
-    if (charts?.monthlySavings?.data) {
-      totalSavings = charts.monthlySavings.data.reduce((a, b) => a + Number(b), 0);
-    }
-
-    // Chart helpers for Generation SVG
-    const genMax = hasCharts && charts.monthlyGeneration ? Math.max(...charts.monthlyGeneration.data.map(n=>Number(n)), 1) : 100;
-    
     return (
-      <div className="predictions-tab-wrapper">
-        <div className="report-header-banner" style={{ marginBottom: '24px' }}>
-          <div className="report-location-info">
-            <div className="location-icon-box">
-              <MapPin size={24} />
+      <PredictionWizard
+        userId={userId}
+        onPredictionComplete={(data, meta) => {
+          setReportData(data);
+          setReportMetadata(meta);
+          setActiveTab('final_report');
+        }}
+        onResetParent={() => {
+          setReportData(null);
+          setReportMetadata(null);
+        }}
+        refreshCredits={fetchCredits}
+      />
+    );
+  };
+
+  const renderFinalReportTab = () => {
+    if (!reportData) {
+      return (
+        <div className="empty-state-wrapper">
+          <div className="empty-state-card">
+            <div className="empty-state-icon-box">
+              <FileText size={32} />
             </div>
-            <div className="location-details-meta">
-              <h2>{reportMetadata?.address || 'AI Solar Performance Report'}</h2>
-              <div className="location-coords-badge">
-                <span className="coords-pill">LAT: {reportMetadata?.latitude?.toFixed(5) || 'N/A'}</span>
-                <span className="coords-pill">LNG: {reportMetadata?.longitude?.toFixed(5) || 'N/A'}</span>
-              </div>
-            </div>
-          </div>
-          <div className="report-actions">
-            <button 
-              className="btn-action-outline" 
-              style={{ borderColor: 'var(--db-accent)', color: 'var(--db-accent)' }} 
-              onClick={async () => {
-                try {
-                  await resetPredictionProgress(userId);
-                  setReportData(null);
-                  setReportMetadata(null);
-                } catch (e) {
-                  console.error(e);
-                }
-              }}
-            >
-              <RefreshCw size={14} />
-              New Report
+            <h2>No Report Available</h2>
+            <p>Please run the prediction wizard to generate a final report.</p>
+            <button className="empty-state-cta-btn" onClick={() => setActiveTab('predictions')}>
+              <Sparkles size={16} />
+              Go to Wizard
             </button>
           </div>
         </div>
+      );
+    }
 
-        {hasCharts && (
-          <div className="report-kpis-grid" style={{ marginBottom: '24px' }}>
-            <div className="metric-card">
-              <div className="metric-card-header">
-                <span className="metric-title">Avg Monthly Gen</span>
-              </div>
-              <div className="metric-value-container">
-                <div className="metric-value highlighted">{avgGen.toFixed(0)}</div>
-                <span className="metric-unit">kWh</span>
-              </div>
-              <div className="metric-card-icon-back"><Zap size={60} /></div>
-            </div>
-
-            <div className="metric-card">
-              <div className="metric-card-header">
-                <span className="metric-title">Est. Annual Savings</span>
-              </div>
-              <div className="metric-value-container">
-                <span className="metric-unit" style={{ marginRight: '4px' }}>{charts.monthlySavings?.currency || '$'}</span>
-                <div className="metric-value" style={{ color: 'var(--db-success)' }}>{totalSavings.toFixed(0)}</div>
-              </div>
-              <div className="metric-card-icon-back"><TrendingUp size={60} /></div>
-            </div>
-
-            <div className="metric-card">
-              <div className="metric-card-header">
-                <span className="metric-title">Est. System Cost</span>
-              </div>
-              <div className="metric-value-container">
-                <span className="metric-unit" style={{ marginRight: '4px' }}>{charts.monthlySavings?.currency || '$'}</span>
-                <div className="metric-value">{sysCost.toFixed(0)}</div>
-              </div>
-              <div className="metric-card-icon-back"><Settings size={60} /></div>
-            </div>
-            
-            <div className="metric-card">
-              <div className="metric-card-header">
-                <span className="metric-title">Payback Period</span>
-              </div>
-              <div className="metric-value-container">
-                <div className="metric-value">
-                  {charts.cumulativeROI?.data ? charts.cumulativeROI.data.findIndex(v => Number(v) > 0) + 1 : 'N/A'}
-                </div>
-                <span className="metric-unit" style={{ marginLeft: '4px' }}>Years</span>
-              </div>
-              <div className="metric-card-icon-back"><Calendar size={60} /></div>
-            </div>
-          </div>
-        )}
-
-        {hasCharts && charts.monthlyGeneration && (
-          <div className="data-section-card" style={{ padding: '24px', marginBottom: '24px' }}>
-            <div className="card-header-simple" style={{ marginBottom: '24px' }}>
-              <h2>{charts.monthlyGeneration?.label || 'Monthly Generation Potential'}</h2>
-            </div>
-            <div style={{ height: '200px', display: 'flex', alignItems: 'flex-end', gap: '12px', paddingBottom: '16px', borderBottom: '1px solid var(--db-border)' }}>
-              {charts.monthlyGeneration.data.map((val, i) => {
-                const num = Number(val);
-                const heightPct = Math.max((num / genMax) * 100, 5);
-                return (
-                  <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px', position: 'relative' }}>
-                    <div style={{ 
-                      width: '100%', 
-                      height: `${heightPct}%`, 
-                      background: 'var(--db-accent)', 
-                      borderRadius: '4px 4px 0 0',
-                      opacity: 0.8,
-                      transition: 'height 0.3s' 
-                    }}></div>
-                    <span style={{ fontSize: '0.75rem', color: 'var(--db-text-muted)' }}>{charts.monthlyGeneration.months[i]}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        {renderSection("Executive Summary", reportData["1_Executive_Summary"], <Sparkles size={18} />)}
-        {renderSection("System Design Overview", reportData["2_System_Design_Overview"], <Grid size={18} />)}
-        {renderSection("Battery Storage Strategy", reportData["3_Battery_Storage_Strategy"], <Zap size={18} />)}
-        {renderSection("Financial Economics & ROI", reportData["4_Financial_Economics_ROI"], <TrendingUp size={18} />)}
-        {renderSection("Environmental Impact", reportData["5_Environmental_Impact"], <Sun size={18} />)}
-        {renderSection("Maintenance Guide", reportData["6_Maintenance_Optimization_Guide"], <Settings size={18} />)}
-        {renderSection("Constraints & Pro Tips", reportData["7_Constraints_Pro_Tips"], <ShieldAlert size={18} />)}
-
-      </div>
+    return (
+      <FinalReportView 
+        reportData={reportData} 
+        reportMetadata={reportMetadata} 
+        onNewReport={async () => {
+          try {
+            await resetPredictionProgress(userId);
+            setReportData(null);
+            setReportMetadata(null);
+            setActiveTab('predictions');
+          } catch (e) {
+            console.error(e);
+          }
+        }}
+      />
     );
   };
 
@@ -721,15 +631,15 @@ const DashboardPage = () => {
       return (
         <div className="empty-state-wrapper">
           <div className="empty-state-card">
-             <div className="empty-state-icon-box">
-                <MapPin size={32} />
-             </div>
-             <h2>No Siting Data Found</h2>
-             <p>You have not completed the Location &amp; Siting Questionnaire yet.</p>
-             <button className="empty-state-cta-btn" onClick={() => setActiveTab('predictions')}>
-               <Sparkles size={16} />
-               Go to Predictions
-             </button>
+            <div className="empty-state-icon-box">
+              <MapPin size={32} />
+            </div>
+            <h2>No Siting Data Found</h2>
+            <p>You have not completed the Location &amp; Siting Questionnaire yet.</p>
+            <button className="empty-state-cta-btn" onClick={() => setActiveTab('predictions')}>
+              <Sparkles size={16} />
+              Go to Predictions
+            </button>
           </div>
         </div>
       );
@@ -762,10 +672,10 @@ const DashboardPage = () => {
     // Find any remaining keys that aren't explicitly categorized (excluding intro/welcome screens)
     const coveredKeys = new Set();
     categories.forEach(cat => cat.keys.forEach(k => coveredKeys.add(k)));
-    
+
     const remainingKeys = Object.keys(sitingData.answers || {})
       .filter(key => questionsData[key] && !questionsData[key].isIntro && !coveredKeys.has(key));
-      
+
     if (remainingKeys.length > 0) {
       categories.push({
         title: "Additional Details",
@@ -784,7 +694,7 @@ const DashboardPage = () => {
               Geographic Parameters
             </h2>
           </div>
-          
+
           <div className="siting-map-preview">
             <div className="radar-line"></div>
             <MapPin size={32} style={{ color: 'var(--db-accent)', filter: 'drop-shadow(0 0 8px rgba(255, 215, 0, 0.6))' }} />
@@ -831,7 +741,7 @@ const DashboardPage = () => {
           {categories.map((cat, catIdx) => {
             const visibleKeys = cat.keys.filter(k => sitingData.answers && sitingData.answers[k] !== undefined);
             if (visibleKeys.length === 0) return null;
-            
+
             return (
               <div key={catIdx} className="qa-group">
                 <div className="qa-category-title" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
@@ -842,12 +752,12 @@ const DashboardPage = () => {
                   {visibleKeys.map((key) => {
                     const question = questionsData[key];
                     if (!question) return null;
-                    
+
                     let answer = sitingData.answers[key];
                     if (Array.isArray(answer)) {
                       answer = answer.join(', ');
                     }
-                    
+
                     return (
                       <div key={key} className="qa-item-card">
                         <div className="qa-icon-wrapper">
@@ -885,15 +795,15 @@ const DashboardPage = () => {
       return (
         <div className="empty-state-wrapper">
           <div className="empty-state-card">
-             <div className="empty-state-icon-box">
-                <CloudSun size={32} />
-             </div>
-             <h2>No Weather Data Found</h2>
-             <p>Generate a solar report in the Predictions tab to compute localized climatology data.</p>
-             <button className="empty-state-cta-btn" onClick={() => setActiveTab('predictions')}>
-               <Sparkles size={16} />
-               Go to Predictions
-             </button>
+            <div className="empty-state-icon-box">
+              <CloudSun size={32} />
+            </div>
+            <h2>No Weather Data Found</h2>
+            <p>Generate a solar report in the Predictions tab to compute localized climatology data.</p>
+            <button className="empty-state-cta-btn" onClick={() => setActiveTab('predictions')}>
+              <Sparkles size={16} />
+              Go to Predictions
+            </button>
           </div>
         </div>
       );
@@ -907,7 +817,7 @@ const DashboardPage = () => {
       const dataObj = {
         name: monthAbbreviations[m.month - 1] || `M${m.month}`,
       };
-      
+
       // Inject variables based on selectedChartGroup
       if (selectedChartGroup === 'solar') {
         dataObj["GHI"] = m.ghiMean || 0;
@@ -926,7 +836,7 @@ const DashboardPage = () => {
         dataObj["AQI"] = m.aqiMean || 0;
         dataObj["Dust"] = m.dustMean || 0;
       }
-      
+
       return dataObj;
     });
 
@@ -965,7 +875,7 @@ const DashboardPage = () => {
 
     return (
       <div className="tab-view-container" style={{ width: '100%' }}>
-        
+
         {/* Dynamic Meteorological Composed Chart Card */}
         <div className="data-section-card" style={{ padding: '24px' }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
@@ -977,25 +887,25 @@ const DashboardPage = () => {
             </div>
             {/* Chart Metric Tabs */}
             <div className="weather-tab-group" style={{ borderBottom: 'none', margin: 0, padding: 0 }}>
-              <button 
+              <button
                 className={`weather-tab-btn ${selectedChartGroup === 'solar' ? 'active' : ''}`}
                 onClick={() => setSelectedChartGroup('solar')}
               >
                 Solar Radiation
               </button>
-              <button 
+              <button
                 className={`weather-tab-btn ${selectedChartGroup === 'temp' ? 'active' : ''}`}
                 onClick={() => setSelectedChartGroup('temp')}
               >
                 Temperature & Humidity
               </button>
-              <button 
+              <button
                 className={`weather-tab-btn ${selectedChartGroup === 'wind' ? 'active' : ''}`}
                 onClick={() => setSelectedChartGroup('wind')}
               >
                 Wind & Precipitation
               </button>
-              <button 
+              <button
                 className={`weather-tab-btn ${selectedChartGroup === 'atmosphere' ? 'active' : ''}`}
                 onClick={() => setSelectedChartGroup('atmosphere')}
               >
@@ -1003,7 +913,7 @@ const DashboardPage = () => {
               </button>
             </div>
           </div>
-          
+
           <div style={{ width: '100%', height: '350px', marginTop: '10px' }}>
             <ResponsiveContainer width="100%" height="100%">
               <ComposedChart data={chartData} margin={{ top: 20, right: 10, left: -20, bottom: 0 }}>
@@ -1011,30 +921,30 @@ const DashboardPage = () => {
                 <XAxis dataKey="name" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis yAxisId="left" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} />
                 <YAxis yAxisId="right" orientation="right" stroke="rgba(255,255,255,0.4)" fontSize={11} tickLine={false} axisLine={false} />
-                <RechartsTooltip 
+                <RechartsTooltip
                   contentStyle={{ backgroundColor: 'rgba(10,10,10,0.95)', border: '1px solid var(--db-border)', borderRadius: '8px', color: '#fff' }}
                   itemStyle={{ color: '#fff' }}
                 />
                 <Legend wrapperStyle={{ paddingTop: '16px' }} />
-                
+
                 {selectedChartGroup === 'solar' && [
                   <Area key="ghi" yAxisId="left" type="monotone" dataKey="GHI" name="Global Horiz Irradiance (GHI, W/m²)" stroke="#fbbf24" fill="rgba(251, 191, 36, 0.05)" strokeWidth={2} />,
                   <Line key="dni" yAxisId="left" type="monotone" dataKey="DNI" name="Direct Normal Irradiance (DNI, W/m²)" stroke="#f59e0b" strokeWidth={2} dot={{ r: 3 }} />,
                   <Line key="dhi" yAxisId="left" type="monotone" dataKey="DHI" name="Diffuse Horiz Irradiance (DHI, W/m²)" stroke="#38bdf8" strokeWidth={1.5} dot={{ r: 2 }} />
                 ]}
-                
+
                 {selectedChartGroup === 'temp' && [
                   <Area key="temp" yAxisId="left" type="monotone" dataKey="Temperature" name="Avg Temperature (°C)" stroke="#ef4444" fill="rgba(239, 68, 68, 0.05)" strokeWidth={2} />,
                   <Line key="dew" yAxisId="left" type="monotone" dataKey="Dewpoint" name="Avg Dewpoint (°C)" stroke="#6366f1" strokeWidth={1.5} dot={{ r: 3 }} />,
                   <Line key="hum" yAxisId="right" type="monotone" dataKey="Humidity" name="Avg Humidity (%)" stroke="#10b981" strokeWidth={1.5} dot={{ r: 2 }} />
                 ]}
-                
+
                 {selectedChartGroup === 'wind' && [
                   <Line key="wind" yAxisId="left" type="monotone" dataKey="WindSpeed" name="Avg Wind Speed (km/h)" stroke="#60a5fa" strokeWidth={2} dot={{ r: 3 }} />,
                   <Bar key="prec" yAxisId="right" dataKey="Precipitation" name="Precipitation (mm)" fill="#3b82f6" opacity={0.6} barSize={12} radius={[2, 2, 0, 0]} />,
                   <Bar key="snow" yAxisId="right" dataKey="Snowfall" name="Snowfall (cm)" fill="#a5f3fc" opacity={0.6} barSize={12} radius={[2, 2, 0, 0]} />
                 ]}
-                
+
                 {selectedChartGroup === 'atmosphere' && [
                   <Area key="cloud" yAxisId="right" type="monotone" dataKey="CloudCover" name="Cloud Cover (%)" stroke="#94a3b8" fill="rgba(148, 163, 184, 0.05)" strokeWidth={1.5} />,
                   <Line key="aqi" yAxisId="left" type="monotone" dataKey="AQI" name="Air Quality Index (AQI)" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />,
@@ -1047,7 +957,7 @@ const DashboardPage = () => {
 
         {/* Bottom Split Layout: Inspector & Database Table */}
         <div className="weather-split-layout">
-          
+
           {/* Detailed Month Inspector Panel */}
           <div className="weather-inspector-card">
             <div className="weather-inspector-header">
@@ -1056,7 +966,7 @@ const DashboardPage = () => {
                 Granular Month Inspector
               </h2>
               {/* Selector */}
-              <select 
+              <select
                 className="weather-month-dropdown"
                 value={selectedInspectorMonth}
                 onChange={(e) => setSelectedInspectorMonth(Number(e.target.value))}
@@ -1109,7 +1019,7 @@ const DashboardPage = () => {
                 Meteorological Database
               </h2>
             </div>
-            
+
             <div className="weather-table-scroll">
               <table className="weather-database-table">
                 <thead>
@@ -1124,8 +1034,8 @@ const DashboardPage = () => {
                 </thead>
                 <tbody>
                   {weatherCacheData.monthlyData.map((m) => (
-                    <tr 
-                      key={m.month} 
+                    <tr
+                      key={m.month}
                       onClick={() => setSelectedInspectorMonth(m.month)}
                       style={{ cursor: 'pointer', background: selectedInspectorMonth === m.month ? 'rgba(255, 215, 0, 0.03)' : 'transparent' }}
                     >
@@ -1141,7 +1051,7 @@ const DashboardPage = () => {
               </table>
             </div>
           </div>
-          
+
         </div>
       </div>
     );
@@ -1169,7 +1079,7 @@ const DashboardPage = () => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0', borderBottom: '1px solid var(--db-border)' }}>
               <div>
-                <h4 style={{ fontWeight: 600 }}>Operations Control Grid</h4>
+                <h4 style={{ fontWeight: '600' }}>Operations Control Grid</h4>
                 <p style={{ fontSize: '0.75rem', color: 'var(--db-text-muted)', marginTop: '4px' }}>EMEA North default telemetry sync interval.</p>
               </div>
               <span style={{ fontSize: '0.8rem', color: 'var(--db-text-secondary)', fontFamily: 'monospace' }}>4000ms</span>
@@ -1193,6 +1103,8 @@ const DashboardPage = () => {
         return renderOverviewTab();
       case 'predictions':
         return renderPredictionsTab();
+      case 'final_report':
+        return renderFinalReportTab();
       case 'analytics':
         return renderAnalyticsTab();
       case 'management':
@@ -1223,8 +1135,8 @@ const DashboardPage = () => {
             <span className="db-brand-subtext">Powered By NitroX</span>
           </div>
         </div>
-        <button 
-          className="mobile-menu-toggle" 
+        <button
+          className="mobile-menu-toggle"
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
         >
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
@@ -1281,8 +1193,8 @@ const DashboardPage = () => {
 
         {/* Footer */}
         <div className="sidebar-footer">
-          <button 
-            className="report-btn" 
+          <button
+            className="report-btn"
             onClick={() => {
               setActiveTab('predictions');
               setMobileMenuOpen(false);
@@ -1302,6 +1214,7 @@ const DashboardPage = () => {
             <h1>
               {activeTab === 'overview' && 'Control Operations Overview'}
               {activeTab === 'predictions' && 'Solar Performance & Forecast'}
+              {activeTab === 'final_report' && 'AI Solar Performance Report'}
               {activeTab === 'analytics' && 'Solar Analytics Engine'}
               {activeTab === 'management' && 'Photovoltaic Array Manager'}
               {activeTab === 'health' && 'System Health & Diagnostics'}
