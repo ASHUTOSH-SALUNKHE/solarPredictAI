@@ -23,7 +23,7 @@ import '../styles/predictionWizard.css';
 
 const delay = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
-const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initialReportData, refreshCredits }) => {
+const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initialReportData, refreshCredits, credits }) => {
   // Stepper state
   const [activeStep, setActiveStep] = useState(1);
   const [progress, setProgress] = useState({
@@ -49,15 +49,26 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
   const [allowFreeText, setAllowFreeText] = useState(false);
   const [locationError, setLocationError] = useState('');
 
+  // Inline confirm dialogs (replaces window.confirm)
+  const [step1ConfirmPending, setStep1ConfirmPending] = useState(null); // { finalAnswers, editMode }
+  const [step3ConfirmPending, setStep3ConfirmPending] = useState(false);
+
+  // Save/submit error states
+  const [step1SaveError, setStep1SaveError] = useState(null);
+  const [step3GenerateError, setStep3GenerateError] = useState(null); // typed error object { type, message }
+
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [resetConfirmInput, setResetConfirmInput] = useState('');
+
   const chatEndRef = useRef(null);
 
   // Step 2: Fetch Weather Data states
   const [isFetchingWeather, setIsFetchingWeather] = useState(false);
-  const [weatherFetchError, setWeatherFetchError] = useState(null);
+  const [weatherFetchError, setWeatherFetchError] = useState(null); // { type, message }
 
   // Step 3: AI Prediction states
   const [isGeneratingPrediction, setIsGeneratingPrediction] = useState(false);
-  const [predictionError, setPredictionError] = useState(false);
+  const [predictionError, setPredictionError] = useState(null); // { type, message }
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
   const loadingMessages = [
@@ -80,48 +91,104 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
       setIsLoadingProgress(true);
       try {
         const savedProgress = await getPredictionProgress(userId);
-        if (savedProgress) {
+        if (savedProgress && savedProgress.step !== undefined) {
           const newProgress = { ...progress };
 
-          if (savedProgress.step >= 1) {
+          let step1Data = (savedProgress.location && savedProgress.answers) ? savedProgress : null;
+          if (savedProgress.step >= 1 && !step1Data) {
+            try {
+              step1Data = await getStep1Data(userId);
+            } catch (err) {
+              console.warn("Failed to fetch step 1 data on mount", err);
+            }
+          }
+
+          if (savedProgress.step >= 1 && step1Data) {
             newProgress.step1 = {
               completed: true,
-              location: savedProgress.location,
-              answers: savedProgress.answers
+              location: step1Data.location,
+              answers: step1Data.answers
             };
-            setLatitude(savedProgress.location?.lat || '');
-            setLongitude(savedProgress.location?.lon || '');
-            setResolvedAddress(savedProgress.location?.address || '');
-            setAnswers(savedProgress.answers || {});
+            setLatitude(step1Data.location?.lat || '');
+            setLongitude(step1Data.location?.lon || '');
+            setResolvedAddress(step1Data.location?.address || '');
+            setAnswers(step1Data.answers || {});
             setStep1Stage('chat');
             setActiveStep(2);
           }
-          if (savedProgress.step >= 2) {
+
+          let step2Data = savedProgress.weatherData ? savedProgress.weatherData : null;
+          if (savedProgress.step >= 2 && !step2Data) {
+            try {
+              const fullWeather = await getStep2Data(userId);
+              if (fullWeather) {
+                if (fullWeather.temp !== undefined) {
+                  // Already in summary format
+                  step2Data = fullWeather;
+                } else {
+                  // Detailed weather data format
+                  const m0 = fullWeather.monthlyData?.[0] || {};
+                  step2Data = {
+                    temp: m0.temperatureMean !== undefined ? m0.temperatureMean : (m0.temperature ?? 25.0),
+                    humidity: m0.humidityMean !== undefined ? m0.humidityMean : (m0.humidity ?? 60),
+                    cloudCover: m0.cloudcoverMean !== undefined ? m0.cloudcoverMean : (m0.cloud_cover ?? 10),
+                    windSpeed: m0.windSpeedMean !== undefined ? m0.windSpeedMean : (m0.wind_speed ?? 12),
+                    radiation: m0.ghiMean !== undefined ? m0.ghiMean : (m0.GHI ?? 500),
+                    fetchedAt: fullWeather.createdAt || new Date().toISOString()
+                  };
+                }
+              }
+            } catch (err) {
+              console.warn("Failed to fetch step 2 data on mount", err);
+            }
+          }
+
+          if (savedProgress.step >= 2 && step2Data) {
             newProgress.step2 = {
               completed: true,
-              weatherData: savedProgress.weatherData
+              weatherData: step2Data
             };
             setActiveStep(3);
           }
+
+          let step3Report = null;
           if (savedProgress.step >= 3) {
             newProgress.step3 = {
               completed: true
             };
             // Instantly load completed prediction results into parent
-            if (savedProgress.location) {
-              getSolarReport(userId).then(report => {
-                if (report) {
-                  newProgress.step3.predictionResult = report;
-                  onPredictionComplete(report, {
-                    latitude: parseFloat(savedProgress.location.lat),
-                    longitude: parseFloat(savedProgress.location.lon),
-                    address: savedProgress.location.address,
-                    answers: savedProgress.answers
+            if (step1Data && step1Data.location) {
+              try {
+                step3Report = await getSolarReport(userId);
+                if (step3Report) {
+                  newProgress.step3.predictionResult = step3Report;
+                  onPredictionComplete(step3Report, {
+                    latitude: parseFloat(step1Data.location.lat),
+                    longitude: parseFloat(step1Data.location.lon),
+                    address: step1Data.location.address,
+                    answers: step1Data.answers,
+                    weatherData: step2Data
                   });
                 }
-              });
+              } catch (err) {
+                console.warn("Failed to fetch report on mount", err);
+              }
             }
           }
+
+          // Centralize and save the fully resolved step data in the central localStorage progress key
+          const fullProgressCached = {
+            userId,
+            step: savedProgress.step,
+            status: 'completed',
+            location: step1Data?.location || null,
+            answers: step1Data?.answers || null,
+            weatherData: step2Data || null,
+            predictionResult: step3Report || null,
+            completedAt: new Date().toISOString()
+          };
+          localStorage.setItem(`prediction_progress_${userId}`, JSON.stringify(fullProgressCached));
+
           setProgress(newProgress);
         }
       } catch (err) {
@@ -289,13 +356,13 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
   };
 
   const completeStep1 = async (finalAnswers, editMode = false) => {
-    const tokenMsg = editMode
-      ? "Saving your edited answers will NOT consume any tokens. Do you want to proceed?"
-      : "Submitting your siting questionnaire answers will consume 10 tokens. Do you want to proceed?";
+    // Show inline confirm dialog instead of window.confirm
+    setStep1ConfirmPending({ finalAnswers, editMode });
+  };
 
-    const confirmed = window.confirm(tokenMsg);
-    if (!confirmed) return;
-
+  const _doCompleteStep1 = async (finalAnswers, editMode) => {
+    setStep1ConfirmPending(null);
+    setStep1SaveError(null);
     setIsTyping(true);
 
     let sanitizedAddress = resolvedAddress || '';
@@ -311,64 +378,54 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
 
     if (editMode) {
       try {
-        // Edit mode: only update answers in MongoDB, no credit deduction
         await editAnswersStep1(userId, finalAnswers);
-
-        // Clear cached Step 1 data so the next "Edit Answers" click fetches fresh data
         localStorage.removeItem(`step1_edit_cache_${userId}`);
-
         setProgress(prev => ({
           ...prev,
-          step1: {
-            ...prev.step1,
-            answers: finalAnswers
-          }
+          step1: { ...prev.step1, answers: finalAnswers }
         }));
-        // Reset active step back to where the user was (Step 3 if weather fetch is done, otherwise Step 2)
         if (progress.step2.completed) {
           setActiveStep(3);
         } else {
           setActiveStep(2);
         }
-        setStep1Stage('chat'); // Return to default chat stage for future edits
+        setStep1Stage('chat');
       } catch (error) {
         console.error("Failed to save edited answers:", error);
-        let errorMsg = "Failed to save edited answers. Please try again.";
-        if (error.response && error.response.status === 429) {
-          errorMsg = "You are editing answers too frequently. Please wait an hour before trying again.";
-        } else if (error.response && error.response.data && error.response.data.message) {
-          errorMsg = error.response.data.message;
+        let errType = 'generic';
+        let errMsg = "Failed to save edited answers. Please try again.";
+        if (error.response?.status === 429) {
+          errType = 'rateLimit';
+          errMsg = error.response.data?.message || "You are editing too frequently. Please wait 1 hour before editing again.";
+        } else if (error.response?.status === 402 || error.response?.data?.error === 'INSUFFICIENT_CREDITS') {
+          errType = 'credits';
+          errMsg = error.response.data?.message || "Insufficient credits.";
+        } else if (error.response?.data?.message) {
+          errMsg = error.response.data.message;
         }
-        alert(errorMsg);
+        setStep1SaveError({ type: errType, message: errMsg });
       }
     } else {
       try {
         await addAiMessageWithTyping("Fantastic! I've noted down all your details. Step 1 is complete! Click the button below to fetch weather data. 🌤️");
-
-        // Save to backend immediately
         await saveStep1Progress(userId, locationObj, finalAnswers);
-
         setProgress(prev => ({
           ...prev,
-          step1: {
-            completed: true,
-            location: locationObj,
-            answers: finalAnswers
-          }
+          step1: { completed: true, location: locationObj, answers: finalAnswers }
         }));
         setActiveStep(2);
-        if (refreshCredits) {
-          refreshCredits();
-        }
+        if (refreshCredits) refreshCredits();
       } catch (error) {
         console.error("Failed to save Step 1 progress:", error);
-        let errorMsg = "Failed to complete Step 1. Please try again.";
-        if (error.response && error.response.status === 429) {
-          errorMsg = "You are performing this action too frequently. Please try again later.";
-        } else if (error.response && error.response.data && error.response.data.message) {
-          errorMsg = error.response.data.message;
+        let errType = 'generic';
+        let errMsg = "Failed to complete Step 1. Please try again.";
+        if (error.response?.status === 429) {
+          errType = 'rateLimit';
+          errMsg = error.response.data?.message || "You are performing this action too frequently. Please try again later.";
+        } else if (error.response?.data?.message) {
+          errMsg = error.response.data.message;
         }
-        alert(errorMsg);
+        setStep1SaveError({ type: errType, message: errMsg });
       }
     }
 
@@ -404,7 +461,6 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
     setIsFetchingWeather(true);
     setWeatherFetchError(null);
     try {
-      // Fetch actual real-time weather summary data from Open-Meteo (completely free, no API key required)
       const latVal = parseFloat(latitude);
       const lonVal = parseFloat(longitude);
       const response = await fetch(
@@ -423,38 +479,74 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
         fetchedAt: new Date().toISOString()
       };
 
-      // Save to backend immediately
       await saveStep2Progress(userId, weatherSummary);
 
       setProgress(prev => ({
         ...prev,
-        step2: {
-          completed: true,
-          weatherData: weatherSummary
-        }
+        step2: { completed: true, weatherData: weatherSummary }
       }));
-
       setActiveStep(3);
     } catch (err) {
       console.error("Failed to fetch weather data:", err);
-      // Fallback in case of rate limit or network failure
+
+      // Classify the error type
+      const status = err.response?.status;
+      const errData = err.response?.data;
+      const isInsufficientCredits = status === 402 || errData?.error === 'INSUFFICIENT_CREDITS';
+      const isRateLimit = status === 429;
+
+      if (isInsufficientCredits) {
+        setWeatherFetchError({
+          type: 'credits',
+          message: errData?.message || "Insufficient credits. Minimum 40 credits required for weather processing."
+        });
+        setIsFetchingWeather(false);
+        return;
+      }
+      if (isRateLimit) {
+        setWeatherFetchError({
+          type: 'rateLimit',
+          message: errData?.message || "You are making too many requests. Please wait a moment and try again."
+        });
+        setIsFetchingWeather(false);
+        return;
+      }
+
+      // For network/API errors, attempt fallback weather
       const fallbackWeather = {
-        temp: 24.5,
-        humidity: 55,
-        cloudCover: 15,
-        windSpeed: 10.5,
-        radiation: 480,
+        temp: 24.5, humidity: 55, cloudCover: 15,
+        windSpeed: 10.5, radiation: 480,
         fetchedAt: new Date().toISOString()
       };
-      await saveStep2Progress(userId, fallbackWeather);
-      setProgress(prev => ({
-        ...prev,
-        step2: {
-          completed: true,
-          weatherData: fallbackWeather
+
+      try {
+        await saveStep2Progress(userId, fallbackWeather);
+        setProgress(prev => ({
+          ...prev,
+          step2: { completed: true, weatherData: fallbackWeather }
+        }));
+        setActiveStep(3);
+      } catch (fallbackErr) {
+        console.error("Failed to save fallback weather data:", fallbackErr);
+        const fbStatus = fallbackErr.response?.status;
+        const fbData = fallbackErr.response?.data;
+        if (fbStatus === 402 || fbData?.error === 'INSUFFICIENT_CREDITS') {
+          setWeatherFetchError({
+            type: 'credits',
+            message: fbData?.message || "Insufficient credits. Minimum 40 credits required for weather processing."
+          });
+        } else if (fbStatus === 429) {
+          setWeatherFetchError({
+            type: 'rateLimit',
+            message: fbData?.message || "Too many requests. Please wait and try again."
+          });
+        } else {
+          setWeatherFetchError({
+            type: 'generic',
+            message: "Failed to process weather data. Please try again."
+          });
         }
-      }));
-      setActiveStep(3);
+      }
     } finally {
       setIsFetchingWeather(false);
     }
@@ -465,36 +557,53 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
   // STEP 3 HANDLERS
   // ----------------------------------------------------
   const handleGeneratePrediction = async () => {
+    setStep3ConfirmPending(false);
     setIsGeneratingPrediction(true);
-    setPredictionError(false);
+    setPredictionError(null);
 
     try {
-      // Call the backend Step 3 endpoint (no body needed, data is loaded from DB)
       const reportData = await saveStep3Progress(userId);
 
       setProgress(prev => ({
         ...prev,
-        step3: {
-          completed: true,
-          predictionResult: reportData
-        }
+        step3: { completed: true, predictionResult: reportData }
       }));
 
-      // Notify parent to render the completed predictions page dashboard
       onPredictionComplete(reportData, {
         latitude: parseFloat(latitude),
         longitude: parseFloat(longitude),
         address: resolvedAddress || `${latitude}, ${longitude}`,
-        answers: answers
+        answers: answers,
+        weatherData: progress.step2.weatherData
       });
 
-      if (refreshCredits) {
-        refreshCredits();
-      }
+      if (refreshCredits) refreshCredits();
 
     } catch (error) {
       console.error("Failed to generate solar predictions:", error);
-      setPredictionError(true);
+      const status = error.response?.status;
+      const errData = error.response?.data;
+      if (status === 402 || errData?.error === 'INSUFFICIENT_CREDITS') {
+        setPredictionError({
+          type: 'credits',
+          message: errData?.message || "Insufficient credits. Minimum 50 credits required for AI Solar Report."
+        });
+      } else if (status === 429) {
+        setPredictionError({
+          type: 'rateLimit',
+          message: errData?.message || "Too many requests. Please wait a moment and try again."
+        });
+      } else if (status === 401 && errData?.error === 'PROGRESS_MISMATCH') {
+        setPredictionError({
+          type: 'mismatch',
+          message: errData?.message || "Your session state is out of sync. Please refresh and try again."
+        });
+      } else {
+        setPredictionError({
+          type: 'generic',
+          message: "Unable to connect to the prediction pipeline. Please try again later."
+        });
+      }
     } finally {
       setIsGeneratingPrediction(false);
     }
@@ -523,6 +632,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
       console.error("Reset progress failed", err);
     } finally {
       setIsLoadingProgress(false);
+      setResetConfirmInput('');
     }
   };
 
@@ -539,6 +649,260 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
 
   return (
     <div className="wizard-container">
+      {/* Credits Bar */}
+      <div style={{
+        display: 'flex', justifyContent: 'flex-end', alignItems: 'center',
+        marginBottom: '16px', paddingBottom: '12px',
+        borderBottom: '1px solid var(--db-border)'
+      }}>
+        <div style={{
+          display: 'inline-flex', alignItems: 'center', gap: '8px',
+          background: credits !== null && credits < 50
+            ? 'rgba(239,68,68,0.06)' : 'rgba(245,158,11,0.07)',
+          border: credits !== null && credits < 50
+            ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(245,158,11,0.2)',
+          borderRadius: '8px', padding: '6px 12px', fontSize: '0.8rem', fontWeight: '600'
+        }}>
+          <Zap size={13} style={{ color: credits !== null && credits < 50 ? '#ef4444' : 'var(--db-accent)' }} />
+          <span style={{ color: 'var(--db-text-secondary)', fontWeight: '400' }}>Credits:</span>
+          <span style={{ color: credits !== null && credits < 50 ? '#ef4444' : 'var(--db-accent-warm)' }}>
+            {credits !== null ? (typeof credits === 'object' ? credits.balance : credits) : '…'}
+          </span>
+          {credits !== null && credits < 50 && (
+            <span style={{ color: '#ef4444', fontSize: '0.72rem', fontWeight: '500' }}>— Low balance</span>
+          )}
+        </div>
+      </div>
+
+      {/* Inline Step 1 Submit Confirm Dialog */}
+      {step1ConfirmPending && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '16px',
+            padding: '28px', maxWidth: '420px', width: '100%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15)', border: '1px solid var(--db-border)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{
+                width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0,
+                background: step1ConfirmPending.editMode ? 'rgba(245,158,11,0.1)' : 'rgba(59,130,246,0.08)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <span style={{ fontSize: '1.4rem' }}>{step1ConfirmPending.editMode ? '✏️' : '📋'}</span>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: 'var(--db-text-primary)' }}>
+                  {step1ConfirmPending.editMode ? 'Save Edited Answers?' : 'Submit Questionnaire?'}
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'var(--db-text-secondary)', lineHeight: '1.4' }}>
+                  {step1ConfirmPending.editMode
+                    ? 'This will update your answers. No credits will be deducted.'
+                    : <>This will submit your siting questionnaire and deduct <strong style={{ color: 'var(--db-accent)' }}>10 credits</strong> from your balance.</>}
+                </p>
+              </div>
+            </div>
+            {credits !== null && !step1ConfirmPending.editMode && (
+              <div style={{
+                padding: '10px 14px', borderRadius: '8px', marginBottom: '16px',
+                background: credits < 10 ? 'rgba(239,68,68,0.06)' : 'rgba(245,158,11,0.06)',
+                border: credits < 10 ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(245,158,11,0.15)',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem'
+              }}>
+                <span style={{ color: 'var(--db-text-secondary)' }}>Your balance:</span>
+                <span style={{ fontWeight: '700', color: credits < 10 ? '#ef4444' : 'var(--db-accent-warm)' }}>
+                  {credits} → {Math.max(0, credits - 10)} credits
+                </span>
+              </div>
+            )}
+            {credits !== null && !step1ConfirmPending.editMode && credits < 10 && (
+              <div style={{
+                padding: '10px 14px', borderRadius: '8px', marginBottom: '16px',
+                background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)',
+                fontSize: '0.82rem', color: '#991b1b', fontWeight: '500'
+              }}>
+                ⚠️ Insufficient credits. You need at least 10 credits to submit.
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                style={{
+                  flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--db-border)',
+                  background: 'transparent', color: 'var(--db-text-secondary)', cursor: 'pointer', fontWeight: '500', fontSize: '0.85rem'
+                }}
+                onClick={() => setStep1ConfirmPending(null)}
+              >Cancel</button>
+              <button
+                style={{
+                  flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
+                  background: credits !== null && !step1ConfirmPending.editMode && credits < 10
+                    ? 'rgba(156,163,175,0.4)' : 'var(--db-accent)',
+                  color: '#fff', cursor: credits !== null && !step1ConfirmPending.editMode && credits < 10 ? 'not-allowed' : 'pointer',
+                  fontWeight: '600', fontSize: '0.85rem'
+                }}
+                disabled={credits !== null && !step1ConfirmPending.editMode && credits < 10}
+                onClick={() => _doCompleteStep1(step1ConfirmPending.finalAnswers, step1ConfirmPending.editMode)}
+              >{step1ConfirmPending.editMode ? 'Save Changes' : 'Confirm & Submit'}</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline Step 3 Generate Confirm Dialog */}
+      {step3ConfirmPending && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '16px',
+            padding: '28px', maxWidth: '420px', width: '100%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15)', border: '1px solid var(--db-border)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{
+                width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0,
+                background: 'rgba(251,191,36,0.12)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <span style={{ fontSize: '1.4rem' }}>☀️</span>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: 'var(--db-text-primary)' }}>
+                  Generate AI Solar Report?
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'var(--db-text-secondary)', lineHeight: '1.4' }}>
+                  This will run the full Gemini AI feasibility analysis and deduct{' '}
+                  <strong style={{ color: 'var(--db-accent)' }}>50 credits</strong> from your balance.
+                </p>
+              </div>
+            </div>
+            {credits !== null && (
+              <div style={{
+                padding: '10px 14px', borderRadius: '8px', marginBottom: '16px',
+                background: credits < 50 ? 'rgba(239,68,68,0.06)' : 'rgba(245,158,11,0.06)',
+                border: credits < 50 ? '1px solid rgba(239,68,68,0.2)' : '1px solid rgba(245,158,11,0.15)',
+                display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem'
+              }}>
+                <span style={{ color: 'var(--db-text-secondary)' }}>Your balance:</span>
+                <span style={{ fontWeight: '700', color: credits < 50 ? '#ef4444' : 'var(--db-accent-warm)' }}>
+                  {credits} → {Math.max(0, credits - 50)} credits
+                </span>
+              </div>
+            )}
+            {credits !== null && credits < 50 && (
+              <div style={{
+                padding: '10px 14px', borderRadius: '8px', marginBottom: '16px',
+                background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.2)',
+                fontSize: '0.82rem', color: '#991b1b', fontWeight: '500'
+              }}>
+                ⚠️ Insufficient credits. You need at least 50 credits to generate the AI report.
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                style={{
+                  flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--db-border)',
+                  background: 'transparent', color: 'var(--db-text-secondary)', cursor: 'pointer', fontWeight: '500', fontSize: '0.85rem'
+                }}
+                onClick={() => setStep3ConfirmPending(false)}
+              >Cancel</button>
+              <button
+                style={{
+                  flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
+                  background: credits !== null && credits < 50 ? 'rgba(156,163,175,0.4)' : 'linear-gradient(135deg, #f59e0b, #e58c00)',
+                  color: '#fff',
+                  cursor: credits !== null && credits < 50 ? 'not-allowed' : 'pointer',
+                  fontWeight: '600', fontSize: '0.85rem'
+                }}
+                disabled={credits !== null && credits < 50}
+                onClick={handleGeneratePrediction}
+              >Generate Report</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Inline Reset Confirm Dialog */}
+      {showResetConfirm && (
+        <div style={{
+          position: 'fixed', inset: 0, zIndex: 9999,
+          background: 'rgba(0,0,0,0.4)', backdropFilter: 'blur(4px)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px'
+        }}>
+          <div style={{
+            background: '#fff', borderRadius: '16px',
+            padding: '28px', maxWidth: '420px', width: '100%',
+            boxShadow: '0 20px 60px rgba(0,0,0,0.15)', border: '1px solid var(--db-border)'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '16px' }}>
+              <div style={{
+                width: '44px', height: '44px', borderRadius: '50%', flexShrink: 0,
+                background: 'rgba(239,68,68,0.1)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center'
+              }}>
+                <span style={{ fontSize: '1.4rem' }}>⚠️</span>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: '700', color: 'var(--db-text-primary)' }}>
+                  Start New Generation?
+                </h3>
+                <p style={{ margin: '4px 0 0', fontSize: '0.82rem', color: 'var(--db-text-secondary)', lineHeight: '1.4' }}>
+                  This will permanently delete your current prediction progress, detailed weather data, and the AI solar report.
+                </p>
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '20px' }}>
+              <label style={{ display: 'block', fontSize: '0.85rem', color: 'var(--db-text-secondary)', marginBottom: '8px', fontWeight: '500' }}>
+                Please type <strong style={{ color: 'var(--db-text-primary)' }}>new generation</strong> to confirm:
+              </label>
+              <input
+                type="text"
+                value={resetConfirmInput}
+                onChange={(e) => setResetConfirmInput(e.target.value)}
+                placeholder="new generation"
+                style={{
+                  width: '100%', padding: '10px 12px', borderRadius: '8px',
+                  border: '1px solid var(--db-border)', fontSize: '0.9rem',
+                  outline: 'none', background: 'var(--db-surface)'
+                }}
+              />
+            </div>
+
+            <div style={{ display: 'flex', gap: '10px' }}>
+              <button
+                style={{
+                  flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--db-border)',
+                  background: 'transparent', color: 'var(--db-text-secondary)', cursor: 'pointer', fontWeight: '500', fontSize: '0.85rem'
+                }}
+                onClick={() => {
+                  setShowResetConfirm(false);
+                  setResetConfirmInput('');
+                }}
+              >Cancel</button>
+              <button
+                style={{
+                  flex: 1, padding: '10px', borderRadius: '8px', border: 'none',
+                  background: resetConfirmInput.trim().toLowerCase() !== 'new generation' ? 'rgba(239,68,68,0.4)' : '#ef4444',
+                  color: '#fff', cursor: resetConfirmInput.trim().toLowerCase() !== 'new generation' ? 'not-allowed' : 'pointer',
+                  fontWeight: '600', fontSize: '0.85rem'
+                }}
+                disabled={resetConfirmInput.trim().toLowerCase() !== 'new generation'}
+                onClick={() => {
+                  setShowResetConfirm(false);
+                  handleStartNewPrediction();
+                }}
+              >Delete & Start</button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Visual Stepper */}
       <PredictionStepper activeStep={activeStep} progress={progress} />
 
@@ -684,7 +1048,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                       <div ref={chatEndRef} />
                     </div>
 
-                    <div className="chat-footer-controls" style={{ padding: '12px', background: 'rgba(0,0,0,0.1)' }}>
+                    <div className="chat-footer-controls" style={{ padding: '12px', background: 'rgba(255,255,255,0.5)', borderTop: '1px solid var(--db-border)' }}>
                       {optionsList.length > 0 && (
                         <div className="chat-options-wrapper">
                           {optionsList.map((opt, idx) => (
@@ -763,7 +1127,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
               {step1Stage === 'preview' && (
                 <div className="preview-answers-wrapper" style={{ marginTop: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <h4 style={{ color: '#fff', margin: 0, fontSize: '1rem', fontWeight: '600' }}>
+                    <h4 style={{ color: 'var(--db-text-primary)', margin: 0, fontSize: '1rem', fontWeight: '600' }}>
                       📋 Review &amp; Edit Questionnaire Answers
                     </h4>
                     <button
@@ -775,7 +1139,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                     </button>
                   </div>
 
-                  <div style={{ padding: '12px', background: 'rgba(255,255,255,0.01)', border: '1px dashed rgba(255,255,255,0.08)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem', color: 'var(--db-text-secondary)', marginBottom: '16px' }}>
+                  <div style={{ padding: '12px', background: 'var(--db-surface)', border: '1px dashed var(--db-border-hover)', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '0.8rem', color: 'var(--db-text-secondary)', marginBottom: '16px' }}>
                     <strong>📍 Installation Site Location</strong>
                     <span>Address: {resolvedAddress || `${latitude}, ${longitude}`}</span>
                     <span>Coords: {latitude}, {longitude}</span>
@@ -790,8 +1154,8 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                           <div
                             key={key}
                             style={{
-                              background: 'rgba(255,255,255,0.02)',
-                              border: '1px solid rgba(255,255,255,0.06)',
+                              background: 'var(--db-surface)',
+                              border: '1px solid var(--db-border)',
                               borderRadius: '8px',
                               padding: '12px 16px',
                               display: 'flex',
@@ -818,9 +1182,9 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                                 rows={2}
                                 style={{
                                   width: '100%',
-                                  background: 'rgba(0,0,0,0.2)',
-                                  border: '1px solid rgba(255,255,255,0.1)',
-                                  color: '#fff',
+                                  background: 'rgba(255,255,255,0.6)',
+                                  border: '1px solid var(--db-border)',
+                                  color: 'var(--db-text-primary)',
                                   borderRadius: '6px',
                                   padding: '8px 10px',
                                   fontSize: '0.85rem',
@@ -857,7 +1221,31 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                       })}
                   </div>
 
-                  <div className="step-actions" style={{ marginTop: '20px', borderTop: '1px solid rgba(255,255,255,0.05)', paddingTop: '16px' }}>
+                  {/* Step 1 Save Error */}
+                  {step1SaveError && (
+                    <div style={{
+                      display: 'flex', gap: '10px', padding: '14px 16px',
+                      background: step1SaveError.type === 'credits' ? 'rgba(239,68,68,0.07)'
+                        : step1SaveError.type === 'rateLimit' ? 'rgba(245,158,11,0.07)'
+                        : 'rgba(239,68,68,0.07)',
+                      border: `1px solid ${step1SaveError.type === 'rateLimit' ? 'rgba(245,158,11,0.25)' : 'rgba(239,68,68,0.25)'}`,
+                      borderRadius: '8px', marginTop: '12px', alignItems: 'flex-start'
+                    }}>
+                      <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>
+                        {step1SaveError.type === 'rateLimit' ? '⏳' : step1SaveError.type === 'credits' ? '💳' : '⚠️'}
+                      </span>
+                      <div>
+                        <div style={{ fontSize: '0.82rem', fontWeight: '700', color: step1SaveError.type === 'rateLimit' ? '#92400e' : '#991b1b', marginBottom: '3px' }}>
+                          {step1SaveError.type === 'rateLimit' ? 'Rate Limit Reached' : step1SaveError.type === 'credits' ? 'Insufficient Credits' : 'Submission Failed'}
+                        </div>
+                        <div style={{ fontSize: '0.82rem', color: step1SaveError.type === 'rateLimit' ? '#78350f' : '#7f1d1d', lineHeight: '1.4' }}>
+                          {step1SaveError.message}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="step-actions" style={{ marginTop: '20px', borderTop: '1px solid var(--db-border)', paddingTop: '16px' }}>
                     <button
                       className="action-btn-secondary"
                       onClick={() => {
@@ -880,7 +1268,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                     </button>
                     <button
                       className="action-btn-primary"
-                      onClick={() => completeStep1(answers, progress.step1.completed)}
+                      onClick={() => { setStep1SaveError(null); completeStep1(answers, progress.step1.completed); }}
                     >
                       {progress.step1.completed ? 'Save Edited Answers' : 'Confirm & Submit'}
                       <ArrowRight size={14} />
@@ -895,19 +1283,44 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
             <div className="step-summary-view" style={{ fontSize: '0.85rem', color: 'var(--db-text-secondary)', marginTop: '8px', display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
               <span className="summary-pill" style={{ color: 'var(--db-success)' }}>✓ Location Confirmed ({progress.step1.location?.lat.toFixed(4)}, {progress.step1.location?.lon.toFixed(4)})</span>
               <span className="summary-pill">✓ Siting Chat Questionnaire Complete</span>
-              <button
-                style={{
-                  background: 'rgba(245,158,11,0.1)',
-                  border: '1px solid rgba(245,158,11,0.25)',
-                  color: 'var(--db-accent)',
-                  borderRadius: '6px',
-                  padding: '4px 10px',
-                  fontSize: '0.75rem',
-                  fontWeight: '600',
-                  cursor: 'pointer',
-                  transition: 'all 0.2s ease'
-                }}
-                onClick={async () => {
+
+              {progress.step3.completed ? (
+                /* Step 3 is done — answers are locked because AI already used them */
+                <span
+                  title="Answers are locked after the AI prediction report has been generated."
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '5px',
+                    background: 'rgba(239,68,68,0.08)',
+                    border: '1px solid rgba(239,68,68,0.2)',
+                    color: '#ef4444',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    cursor: 'not-allowed',
+                    opacity: 0.75
+                  }}
+                >
+                  <Lock size={12} />
+                  Answers Locked
+                </span>
+              ) : (
+                /* Steps 1 or 2 completed — editing is still allowed */
+                <button
+                  style={{
+                    background: 'rgba(245,158,11,0.1)',
+                    border: '1px solid rgba(245,158,11,0.25)',
+                    color: 'var(--db-accent)',
+                    borderRadius: '6px',
+                    padding: '4px 10px',
+                    fontSize: '0.75rem',
+                    fontWeight: '600',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onClick={async () => {
                   try {
                     setIsTyping(true);
 
@@ -980,9 +1393,11 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                 }}
               >
                 ✏️ Edit Answers
-              </button>
+                </button>
+              )}
             </div>
           )}
+
         </div>
 
         {/* ==================================================== */}
@@ -1008,6 +1423,54 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                 We will query satellite records and micro-climate models to retrieve atmospheric parameters:
                 irradiance, cloud cover index, ambient temperature coefficients, and humidity records.
               </p>
+
+              {weatherFetchError && (
+                <div style={{
+                  display: 'flex',
+                  gap: '12px',
+                  padding: '16px',
+                  background: weatherFetchError.type === 'rateLimit' ? 'rgba(245,158,11,0.08)' : 'rgba(239, 68, 68, 0.08)',
+                  border: weatherFetchError.type === 'rateLimit' ? '1px solid rgba(245,158,11,0.3)' : '1px solid rgba(239, 68, 68, 0.25)',
+                  borderRadius: '8px',
+                  marginBottom: '16px',
+                  marginTop: '12px',
+                  alignItems: 'flex-start'
+                }}>
+                  <div style={{
+                    color: weatherFetchError.type === 'rateLimit' ? '#d97706' : '#ef4444',
+                    flexShrink: 0, marginTop: '2px'
+                  }}>
+                    <AlertTriangle size={20} />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <h4 style={{
+                      margin: 0, fontSize: '0.9rem', fontWeight: '700',
+                      color: weatherFetchError.type === 'rateLimit' ? '#92400e' : '#991b1b'
+                    }}>
+                      {weatherFetchError.type === 'credits' ? '💳 Insufficient Credits'
+                        : weatherFetchError.type === 'rateLimit' ? '⏳ Rate Limit Reached'
+                        : '⚠️ Weather Siting Failed'}
+                    </h4>
+                    <p style={{
+                      margin: 0, fontSize: '0.85rem', lineHeight: '1.4', fontWeight: '500',
+                      color: weatherFetchError.type === 'rateLimit' ? '#78350f' : '#7f1d1d'
+                    }}>
+                      {weatherFetchError.message}
+                    </p>
+                    {weatherFetchError.type === 'credits' && credits !== null && (
+                      <div style={{
+                        marginTop: '6px', padding: '8px 12px', borderRadius: '6px',
+                        background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)',
+                        fontSize: '0.8rem', color: '#991b1b', fontWeight: '500',
+                        display: 'flex', justifyContent: 'space-between'
+                      }}>
+                        <span>Current Balance:</span>
+                        <span style={{ fontWeight: '700' }}>{credits} credits (need 40)</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
 
               {isFetchingWeather ? (
                 <div className="geocoding-box" style={{ margin: '16px 0' }}>
@@ -1076,7 +1539,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                 Generate your customized solar report. This aggregates your location details, chatbot questionnaire answers,
                 and climate profiles into a 12-month aggregated feasibility model.
                 <br />
-                <strong style={{ color: 'var(--db-accent)' }}>Note: This operation consumes 1 report credit.</strong>
+                <strong style={{ color: 'var(--db-accent)' }}>Note: This operation consumes 50 credits from your balance.</strong>
               </p>
 
               {isGeneratingPrediction ? (
@@ -1091,19 +1554,73 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
               ) : (
                 <>
                   {predictionError && (
-                    <div className="alert-log-row highlighted-warn" style={{ marginBottom: '16px' }}>
-                      <div className="row-icon-wrapper alert-warn">
+                    <div style={{
+                      display: 'flex',
+                      gap: '12px',
+                      padding: '16px',
+                      background: predictionError.type === 'rateLimit' ? 'rgba(245,158,11,0.08)'
+                        : predictionError.type === 'mismatch' ? 'rgba(139,92,246,0.08)'
+                        : 'rgba(239, 68, 68, 0.08)',
+                      border: predictionError.type === 'rateLimit' ? '1px solid rgba(245,158,11,0.3)'
+                        : predictionError.type === 'mismatch' ? '1px solid rgba(139,92,246,0.3)'
+                        : '1px solid rgba(239, 68, 68, 0.25)',
+                      borderRadius: '8px',
+                      marginBottom: '16px',
+                      alignItems: 'flex-start'
+                    }}>
+                      <div style={{
+                        color: predictionError.type === 'rateLimit' ? '#d97706'
+                          : predictionError.type === 'mismatch' ? '#7c3aed'
+                          : '#ef4444',
+                        flexShrink: 0, marginTop: '2px'
+                      }}>
                         <AlertTriangle size={20} />
                       </div>
-                      <div className="alert-body">
-                        <h3 className="warning">Prediction Generation Failed</h3>
-                        <p>Unable to connect to the prediction pipeline. Ensure you have report credits remaining and try again.</p>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <h4 style={{
+                          margin: 0, fontSize: '0.9rem', fontWeight: '700',
+                          color: predictionError.type === 'rateLimit' ? '#92400e'
+                            : predictionError.type === 'mismatch' ? '#4c1d95'
+                            : '#991b1b'
+                        }}>
+                          {predictionError.type === 'credits' ? '💳 Insufficient Credits'
+                            : predictionError.type === 'rateLimit' ? '⏳ Rate Limit Reached'
+                            : predictionError.type === 'mismatch' ? '🔒 Session Out of Sync'
+                            : '⚠️ Prediction Generation Failed'}
+                        </h4>
+                        <p style={{
+                          margin: 0, fontSize: '0.85rem', lineHeight: '1.5', fontWeight: '500',
+                          color: predictionError.type === 'rateLimit' ? '#78350f'
+                            : predictionError.type === 'mismatch' ? '#3b0764'
+                            : '#7f1d1d'
+                        }}>
+                          {predictionError.message}
+                        </p>
+                        {predictionError.type === 'credits' && credits !== null && (
+                          <div style={{
+                            marginTop: '6px', padding: '8px 12px', borderRadius: '6px',
+                            background: 'rgba(239,68,68,0.06)', border: '1px solid rgba(239,68,68,0.15)',
+                            fontSize: '0.8rem', color: '#991b1b', fontWeight: '500',
+                            display: 'flex', justifyContent: 'space-between'
+                          }}>
+                            <span>Current Balance:</span>
+                            <span style={{ fontWeight: '700' }}>{credits} credits (need 50)</span>
+                          </div>
+                        )}
+                        {predictionError.type === 'rateLimit' && (
+                          <div style={{
+                            marginTop: '6px', fontSize: '0.8rem',
+                            color: '#78350f', fontStyle: 'italic'
+                          }}>
+                            The rate limit will reset automatically. Please try again shortly.
+                          </div>
+                        )}
                       </div>
                     </div>
                   )}
 
                   <div className="step-actions">
-                    <button className="action-btn-primary" onClick={handleGeneratePrediction}>
+                    <button className="action-btn-primary" onClick={() => { setPredictionError(null); setStep3ConfirmPending(true); }}>
                       <Sparkles size={14} />
                       Generate Prediction
                     </button>
@@ -1130,7 +1647,8 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                         latitude: parseFloat(progress.step1.location.lat),
                         longitude: parseFloat(progress.step1.location.lon),
                         address: progress.step1.location.address,
-                        answers: progress.step1.answers
+                        answers: progress.step1.answers,
+                        weatherData: progress.step2.weatherData
                       });
                     }
                   }}
@@ -1141,7 +1659,7 @@ const PredictionWizard = ({ userId, onPredictionComplete, onResetParent, initial
                 <button
                   className="action-btn-secondary"
                   style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', padding: '8px 16px', borderColor: 'rgba(239, 68, 68, 0.3)', color: '#ef4444' }}
-                  onClick={handleStartNewPrediction}
+                  onClick={() => setShowResetConfirm(true)}
                 >
                   <RefreshCcw size={14} />
                   Start New Prediction

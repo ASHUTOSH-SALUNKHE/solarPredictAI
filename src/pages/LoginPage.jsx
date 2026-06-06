@@ -24,7 +24,7 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (isAuthenticated) {
-      navigate('/test', { replace: true });
+      navigate('/dashboard', { replace: true });
     }
   }, [isAuthenticated, navigate]);
 
@@ -86,7 +86,7 @@ const LoginPage = () => {
         message: result.message || 'Logged in successfully! Redirecting...'
       });
 
-      const origin = location.state?.from?.pathname || '/test';
+      const origin = location.state?.from?.pathname || '/dashboard';
       
       setTimeout(() => {
         navigate(origin, { replace: true });

@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Play, Search, HelpCircle, CloudSun, Target, ChevronLeft, ChevronRight, Zap, Activity, Compass, Database } from 'lucide-react';
 import { Helmet } from 'react-helmet-async';
+import { useAuth } from '../context/AuthContext';
 import '../styles/home.css';
 
 // CountUp Helper Component for Stats Animation
@@ -67,6 +68,7 @@ const CountUp = ({ end, duration = 2000, prefix = '', suffix = '', format = true
 };
 
 const HomePage = () => {
+  const { isAuthenticated } = useAuth();
   const videoRef = useRef(null);
   const [activeStep, setActiveStep] = useState(0);
   const [activeFaq, setActiveFaq] = useState(null);
@@ -415,7 +417,7 @@ const HomePage = () => {
 
           {/* Elegant CTA Buttons */}
           <motion.div className="hero-actions" variants={itemVariants}>
-            <Link to="/register" className="btn-primary-clean">
+            <Link to={isAuthenticated ? "/dashboard" : "/register"} className="btn-primary-clean">
               Get Started
             </Link>
             <a href="#features" className="btn-secondary-clean">
@@ -832,7 +834,7 @@ const HomePage = () => {
               <h3 className="footer-col-title">Platform</h3>
               <ul className="footer-links-list">
                 <li><Link to="/login" title="Sign In to Platform">Sign In</Link></li>
-                <li><Link to="/register" title="Sign Up for Platform">Get Started</Link></li>
+                <li><Link to={isAuthenticated ? "/dashboard" : "/register"} title="Sign Up for Platform">Get Started</Link></li>
                 <li><a href="#features" title="Learn Platform Features">Features</a></li>
               </ul>
             </div>

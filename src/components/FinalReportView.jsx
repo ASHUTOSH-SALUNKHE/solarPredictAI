@@ -1,6 +1,6 @@
 import React from 'react';
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
-import { MapPin, RefreshCw, Zap, TrendingUp, Settings, Calendar, Sparkles, Grid, Sun, ShieldAlert } from 'lucide-react';
+import { MapPin, RefreshCw, Zap, TrendingUp, Settings, Calendar, Sparkles, Grid, Sun, ShieldAlert, Thermometer, CloudSun, Wind } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import '../styles/finalReport.css';
 
@@ -122,7 +122,7 @@ const FinalReportView = ({ reportData, reportMetadata, onNewReport }) => {
           <div className="kpi-icon-bg"><TrendingUp size={100} /></div>
           <div className="kpi-title"><TrendingUp size={14} /> Est. Annual Savings</div>
           <div className="kpi-value-wrapper">
-            <div className="kpi-unit" style={{ color: '#4ade80' }}>{charts?.monthlySavings?.currency || '$'}</div>
+            <div className="kpi-unit" style={{ color: 'var(--db-success)' }}>{charts?.monthlySavings?.currency || '$'}</div>
             <div className="kpi-value success">{totalSavings.toFixed(0)}</div>
           </div>
         </div>
@@ -148,6 +148,36 @@ const FinalReportView = ({ reportData, reportMetadata, onNewReport }) => {
         </div>
       </div>
 
+      {/* Siting Weather Summary */}
+      {reportMetadata?.weatherData && (
+        <div className="detail-card" style={{ marginBottom: '40px', padding: '24px' }}>
+          <div className="detail-card-header" style={{ borderBottom: 'none', paddingBottom: 0, marginBottom: '20px' }}>
+            <div className="detail-card-icon" style={{ background: 'var(--db-amber-light)', color: 'var(--db-accent-warm)' }}>
+              <CloudSun size={20} />
+            </div>
+            <h3>Micro-climate Siting Data</h3>
+          </div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px' }}>
+            <div style={{ flex: 1, minWidth: '140px', background: 'rgba(255,255,255,0.8)', border: '1px solid var(--db-border)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.01)' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--db-text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}><Thermometer size={14} /> Temperature</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--db-text-primary)' }}>{reportMetadata.weatherData.temp.toFixed(1)} °C</span>
+            </div>
+            <div style={{ flex: 1, minWidth: '140px', background: 'rgba(255,255,255,0.8)', border: '1px solid var(--db-border)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.01)' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--db-text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}><Sun size={14} /> Irradiance</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--db-text-primary)' }}>{reportMetadata.weatherData.radiation.toFixed(0)} W/m²</span>
+            </div>
+            <div style={{ flex: 1, minWidth: '140px', background: 'rgba(255,255,255,0.8)', border: '1px solid var(--db-border)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.01)' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--db-text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}><CloudSun size={14} /> Cloud Cover</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--db-text-primary)' }}>{reportMetadata.weatherData.cloudCover}%</span>
+            </div>
+            <div style={{ flex: 1, minWidth: '140px', background: 'rgba(255,255,255,0.8)', border: '1px solid var(--db-border)', borderRadius: '8px', padding: '16px', display: 'flex', flexDirection: 'column', gap: '8px', boxShadow: '0 2px 8px rgba(0,0,0,0.01)' }}>
+              <span style={{ fontSize: '0.8rem', color: 'var(--db-text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}><Wind size={14} /> Wind Speed</span>
+              <span style={{ fontSize: '1.25rem', fontWeight: '600', color: 'var(--db-text-primary)' }}>{reportMetadata.weatherData.windSpeed.toFixed(1)} km/h</span>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Interactive Chart */}
       {hasCharts && generationData.length > 0 && (
         <div className="chart-glass-container">
@@ -159,15 +189,15 @@ const FinalReportView = ({ reportData, reportMetadata, onNewReport }) => {
               <AreaChart data={generationData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ffd700" stopOpacity={0.8}/>
-                    <stop offset="95%" stopColor="#ffd700" stopOpacity={0}/>
+                    <stop offset="5%" stopColor="var(--db-accent-warm)" stopOpacity={0.8}/>
+                    <stop offset="95%" stopColor="var(--db-accent-warm)" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="name" stroke="#a1a1a6" tick={{ fill: '#a1a1a6', fontSize: 12 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="#a1a1a6" tick={{ fill: '#a1a1a6', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <XAxis dataKey="name" stroke="var(--db-text-secondary)" tick={{ fill: 'var(--db-text-secondary)', fontSize: 12 }} axisLine={false} tickLine={false} />
+                <YAxis stroke="var(--db-text-secondary)" tick={{ fill: 'var(--db-text-secondary)', fontSize: 12 }} axisLine={false} tickLine={false} />
                 <RechartsTooltip content={<CustomTooltip />} />
-                <Area type="monotone" dataKey="value" stroke="#ffd700" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
+                <Area type="monotone" dataKey="value" stroke="var(--db-accent-warm)" strokeWidth={3} fillOpacity={1} fill="url(#colorValue)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
