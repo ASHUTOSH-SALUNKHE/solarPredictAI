@@ -86,7 +86,10 @@ const LoginPage = () => {
         message: result.message || 'Logged in successfully! Redirecting...'
       });
 
-      const origin = location.state?.from?.pathname || '/dashboard';
+      let origin = location.state?.from?.pathname || '/dashboard';
+      if (origin === '/test') {
+        origin = '/dashboard';
+      }
       
       setTimeout(() => {
         navigate(origin, { replace: true });
