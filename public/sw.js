@@ -3,7 +3,7 @@ const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/favicon.svg',
+  '/logo.png',
   '/solar_house.webp'
 ];
 

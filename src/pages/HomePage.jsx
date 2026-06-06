@@ -336,7 +336,7 @@ const HomePage = () => {
                   "url": "https://solarpredictai.xyz/",
                   "logo": {
                     "@type": "ImageObject",
-                    "url": "https://solarpredictai.xyz/favicon.svg"
+                    "url": "https://solarpredictai.xyz/logo.png"
                   }
                 },
                 {

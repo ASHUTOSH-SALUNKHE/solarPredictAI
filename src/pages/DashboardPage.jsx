@@ -279,8 +279,9 @@ const DashboardPage = () => {
       {/* 1. TOP NAVIGATION BAR */}
       <nav className="top-nav-bar">
         <div className="nav-brand">
-          <div className="nav-logo-text">
-            ☀️ solar<span className="nav-logo-accent">predict</span>ai
+          <div className="nav-logo-text" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <img src="/logo.png" alt="SolarPredict AI Logo" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
+            solar<span className="nav-logo-accent">predict</span>ai
           </div>
         </div>
 

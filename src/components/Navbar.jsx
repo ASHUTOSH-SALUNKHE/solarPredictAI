@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { Sun, Menu, X, ArrowRight } from 'lucide-react';
+import { Menu, X, ArrowRight } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const Navbar = () => {
@@ -58,7 +58,7 @@ const Navbar = () => {
           {/* Brand/Logo */}
           <Link to="/" className="nav-brand" title="SolarPredict AI Home">
             <div className="brand-icon-wrapper">
-              <Sun size={20} className="brand-icon" />
+              <img src="/logo.png" alt="SolarPredict AI Logo" className="brand-icon" style={{ width: '20px', height: '20px', objectFit: 'contain' }} />
             </div>
             <div className="brand-text-container">
               <span className="brand-text">SolarPredict AI</span>
